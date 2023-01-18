@@ -9,11 +9,8 @@ pretrained_models
 /output
 instant_test_output
 inference_test_output
-/try_pytorch_lightning
 
-*.ttf
-*.jpg
-*.png
+
 
 # compilation and distribution
 __pycache__
