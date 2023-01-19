@@ -74,7 +74,7 @@ class LoadPointsAux(BopDatasetAux):
         obj_id = inst["obj_id"]
         if obj_id not in self.model_points.keys():
             model = load_ply(dataset.meta_info.model_tpath.format(obj_id=obj_id))
-            assert self.num_points <= model["pts"].shape[0]
+            self.num_points = min(model["pts"].shape[0], self.num_points)
             chosen_idx = np.random.choice(model["pts"].shape[0], self.num_points, replace=False)
             self.model_points[obj_id] = model["pts"][chosen_idx, :]
         inst["points"] = self.model_points[obj_id]
