@@ -81,12 +81,8 @@ def main():
     model = build_model(cfg)
 
     # datasets
-    dataset = build_BOP_train_dataset(cfg, cfg.DATASETS.TRAIN, args.debug)
-    n_valid = args.n_valid
-    data_train, data_valid = torch.utils.data.random_split(
-        dataset, (len(dataset) - n_valid, n_valid),
-        generator=torch.Generator().manual_seed(0),
-    )
+    data_train = build_BOP_train_dataset(cfg, cfg.DATASETS.TRAIN, args.debug)
+    data_valid = build_BOP_train_dataset(cfg, cfg.DATASETS.TEST, args.debug)
     loader_args = dict(
         batch_size=cfg.TRAIN.BATCH_SIZE,
         num_workers=cfg.TRAIN.NUM_WORKERS,
