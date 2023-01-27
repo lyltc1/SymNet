@@ -86,12 +86,12 @@ def main():
     loader_args = dict(
         batch_size=cfg.TRAIN.BATCH_SIZE,
         num_workers=cfg.TRAIN.NUM_WORKERS,
-        persistent_workers=True, shuffle=True,
+        persistent_workers=True,
         worker_init_fn=worker_init_fn, pin_memory=True,
         collate_fn=batch_data_train,
     )
-    loader_train = torch.utils.data.DataLoader(data_train, drop_last=True, **loader_args)
-    loader_valid = torch.utils.data.DataLoader(data_valid, **loader_args)
+    loader_train = torch.utils.data.DataLoader(data_train, drop_last=True, shuffle=True, **loader_args)
+    loader_valid = torch.utils.data.DataLoader(data_valid, shuffle=False, **loader_args)
 
     # set output_dir
     if cfg.OUTPUT_DIR.lower() == "auto":
