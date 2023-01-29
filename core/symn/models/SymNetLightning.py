@@ -283,6 +283,8 @@ class SymNet(pl.LightningModule):
         optimizer.zero_grad()
         scheduler.step()
         self.log(f'train/total_loss', losses)
+        losses_eval = loss_dict["loss_PM_R"] + loss_dict["loss_site_xy"] + loss_dict["loss_site_z"]
+        self.log(f'train/eval_loss', losses_eval, sync_dist=True)
         for k, v in loss_dict.items():
             self.log(f'train/{k}', v)
         return losses
