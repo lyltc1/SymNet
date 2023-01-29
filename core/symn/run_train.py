@@ -116,8 +116,8 @@ def main():
         devices=args.gpus,
         callbacks=[
             pl.callbacks.LearningRateMonitor(logging_interval="step"),
-            pl.callbacks.ModelCheckpoint(dirpath=cfg.OUTPUT_DIR, save_top_k=3,
-                                         save_last=True, monitor='valid/total_loss'),
+            pl.callbacks.ModelCheckpoint(dirpath=cfg.OUTPUT_DIR, save_top_k=1,
+                                         save_last=True, monitor='valid/eval_loss'),
             TQDMProgressBar(refresh_rate=20),
         ],
         logger=[

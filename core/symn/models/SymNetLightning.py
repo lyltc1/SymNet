@@ -307,8 +307,11 @@ class SymNet(pl.LightningModule):
                               do_output=False)
         losses = sum(loss_dict.values())
         self.log(f'valid/total_loss', losses, sync_dist=True)
+        losses_eval = loss_dict["loss_PM_R"] + loss_dict["loss_site_xy"] + loss_dict["loss_site_z"]
+        self.log(f'valid/eval_loss', losses_eval, sync_dist=True)
         for k, v in loss_dict.items():
             self.log(f'valid/{k}', v, sync_dist=True)
+        
         return losses
 
     @torch.no_grad()
