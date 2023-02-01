@@ -120,17 +120,25 @@ def write_cvs(evaluation_result_path, file_name_prefix, predictions):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config-file", metavar="FILE", help="path to config file")
-    parser.add_argument("--ckpt", default=None, help="the checkpoint to evaluate")
+    parser.add_argument("--eval_folder", metavar="FILE", help="path to eval folder")
+    parser.add_argument("--use_last_ckpt", action="store_true", help="else use best ckpt")
     parser.add_argument("--debug", action="store_true")
     parser.add_argument('--device', default='cuda:0')
 
     args = parser.parse_args()
-    # parse --config-file
-    assert args.config_file
+    # parse --eval_folder, generate args.config_file
+    assert args.eval_folder
+    for file in os.listdir(args.eval_folder):
+        if os.path.splitext(file)[1] == '.py':
+            args.config_file = os.path.join(args.eval_folder, file)
+
     cfg = Config.fromfile(args.config_file)
-    # parse --ckpt
-    assert args.ckpt
+    # parse --use_last_ckpt, generate args.ckpt
+    args.ckpt = os.path.join(args.eval_folder, 'last.ckpt')
+    if args.use_last_ckpt:
+        for file in os.listdir(args.eval_folder):
+            if os.path.splitext(file)[1] == '.ckpt' and os.path.splitext(file)[0].startswith("epoch"):
+                args.ckpt = os.path.join(args.eval_folder, file)
     cfg.RESUME = args.ckpt
     # parse --debug
     cfg.DEBUG = args.debug

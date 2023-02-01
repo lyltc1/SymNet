@@ -82,12 +82,11 @@ python core/symn/run_train.py --config-file configs/symn/tless/symn_tless_config
 ```
 
 ## Evaluation
-`python core/symn/run_evaluate.py <config_path><ckpt_path> --debug (other args)`
+`python core/symn/run_evaluate.py <eval_folder> --debug (other args)`
 
 Example:
 ```
 python core/symn/run_evaluate.py \
---config-file output/SymNet_tless_obj4_20221225_171440/symn_tless_obj04_R_allo_sym.py \
---ckpt output/SymNet_tless_obj4_20221225_171440/epoch=282-step=113482.ckpt \
+--eval_folder output/SymNet_tless_obj4_20221225_171440 \
 --debug
 ```
