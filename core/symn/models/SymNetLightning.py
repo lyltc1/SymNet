@@ -1,5 +1,8 @@
 import logging
 from functools import partial
+import numpy as np
+from bop_toolkit_lib import inout
+from bop_toolkit_lib.pose_error import add, adi
 import torch
 import torch.nn as nn
 from .resnet_backbone import ResNetBackboneNetForCDPN, ResNetBackboneNetForASPP, resnet_spec
@@ -7,6 +10,7 @@ from .cdpn_geo_net import CDPNGeoNet
 from .aspp_geo_net import ASPPGeoNet
 from .conv_pnp_net import ConvPnPNet
 from core.utils.rot_reps import ortho6d_to_mat_batch, ortho6d_to_mat_with_axis_batch
+from core.symn.MetaInfo import MetaInfo
 from ..utils.pose_utils import pose_from_param
 from .pm_loss import PMLoss
 import pytorch_lightning as pl
@@ -42,6 +46,26 @@ class SymNet(pl.LightningModule):
 
         if self.num_classes > 1 and self.sym_axis is not None:
             raise NotImplementedError("sym_axis only use for per object training")
+
+        # get info used in valid metric
+        obj_ids = cfg.DATASETS.OBJ_IDS
+        assert len(obj_ids) == 1, "use adx to valid only support for per object training now"
+        dataset_name = cfg.DATASETS.NAME
+        meta_info = MetaInfo(dataset_name)
+        models_3d = {obj_id: inout.load_ply(meta_info.model_tpath.format(obj_id=obj_id)) for obj_id in obj_ids}
+        models_info = inout.load_json(meta_info.models_info_path, keys_to_int=True)
+        diameters = {obj_id: models_info[obj_id]['diameter'] for obj_id in obj_ids}
+        sym_obj_id = cfg.DATASETS.SYM_OBJS_ID
+        if sym_obj_id == "bop":
+            sym_obj_id = [k for k, v in models_info.items() if 'symmetries_discrete' in v or 'symmetries_continuous' in v]
+            cfg.DATASETS.SYM_OBJS_ID = sym_obj_id
+        obj_id = obj_ids[0]
+        self.obj_id = obj_id
+        self.adx = adi if obj_id in sym_obj_id else add
+        self.diameter = diameters[obj_id]
+        self.pts = models_3d[obj_id]["pts"]
+        self.adx_str = 'adi' if obj_id in sym_obj_id else "add"
+        
 
     def step(self, x, K, AABB, obj_idx=0, gt_visib_mask=None, gt_amodal_mask=None, gt_binary_code=None, gt_R=None,
              gt_t=None, gt_SITE=None, gt_allo_rot6d=None, gt_allo=None, points=None, extents=None, sym_infos=None,
@@ -290,7 +314,7 @@ class SymNet(pl.LightningModule):
         return losses
 
     def validation_step(self, batch, batch_nb):
-        loss_dict = self.step(x=batch['rgb_crop'],
+        out_dict, loss_dict = self.step(x=batch['rgb_crop'],
                               K=batch["K_crop"],
                               AABB=batch["AABB_crop"],
                               obj_idx=batch["obj_idx"],
@@ -306,15 +330,62 @@ class SymNet(pl.LightningModule):
                               extents=batch["extent"],
                               sym_infos=batch["sym_info"],
                               do_loss=True,
-                              do_output=False)
+                              do_output=True)
         losses = sum(loss_dict.values())
         self.log(f'valid/total_loss', losses, sync_dist=True)
         losses_eval = loss_dict["loss_PM_R"] + loss_dict["loss_site_xy"] + loss_dict["loss_site_z"]
         self.log(f'valid/eval_loss', losses_eval, sync_dist=True)
         for k, v in loss_dict.items():
             self.log(f'valid/{k}', v, sync_dist=True)
-        
-        return losses
+
+        out_rots = out_dict["rot"].detach().cpu().numpy()  # [b,3,3]
+        out_transes = out_dict["trans"].detach().cpu().numpy()  # [b,3]
+        cam_R_obj = batch["cam_R_obj"].detach().cpu().numpy()
+        cam_t_obj = batch["cam_t_obj"].detach().cpu().numpy()
+        out_list = []
+        for i in range(len(out_rots)):
+            gt_R = cam_R_obj[i]
+            gt_t = cam_t_obj[i]
+            est_R = out_rots[i]
+            est_t = out_transes[i]
+            out_list.append({"R": est_R, "t": est_t, "gt_R": gt_R, "gt_t": gt_t})
+        return {"loss": losses, "pred": out_list}
+    
+    def validation_step_end(self, batch_parts):
+        out_list = []
+        for batch_part in batch_parts:
+            for pred in batch_part:
+                out_list.append(pred)
+        return out_list
+
+    def validation_epoch_end(self, validation_step_outputs):
+        predictions = []
+        for out in validation_step_outputs:
+            for d in out:
+                predictions.append(d)
+
+        ADX_passed = np.zeros(len(predictions))
+        ADX_passed_5 = np.zeros(len(predictions))
+        ADX_passed_2 = np.zeros(len(predictions))
+        ADX_error = np.zeros(len(predictions))
+        ADX_passed_posecnn_10 = np.zeros(len(predictions))
+        for i, d in enumerate(predictions):
+            adx_error = self.adx(d['R'], d['t'], d['gt_R'], d['gt_t'], pts=self.pts)
+            if np.isnan(adx_error):
+                adx_error = 10000
+            ADX_error[i] = adx_error
+            if adx_error < self.diameter * 0.1:
+                ADX_passed[i] = 1
+            if adx_error < self.diameter * 0.05:
+                ADX_passed_5[i] = 1
+            if adx_error < self.diameter * 0.02:
+                ADX_passed_2[i] = 1
+        ADX_passed = np.mean(ADX_passed)
+        ADX_passed_5 = np.mean(ADX_passed_5)
+        ADX_passed_2 = np.mean(ADX_passed_2)
+        self.log(f'valid/adx_10', ADX_passed, sync_dist=False)
+        self.log(f'valid/adx_5', ADX_passed_5, sync_dist=False)
+        self.log(f'valid/adx_2', ADX_passed_2, sync_dist=False)
 
     @torch.no_grad()
     def infer(self, x, K, AABB, obj_idx):

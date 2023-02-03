@@ -117,13 +117,13 @@ def main():
         callbacks=[
             pl.callbacks.LearningRateMonitor(logging_interval="step"),
             pl.callbacks.ModelCheckpoint(dirpath=cfg.OUTPUT_DIR, save_top_k=1,
-                                         save_last=True, monitor='valid/eval_loss'),
+                                         save_last=True, monitor='valid/adx_10'),
             TQDMProgressBar(refresh_rate=20),
         ],
         logger=[
             TensorBoardLogger(save_dir=cfg.OUTPUT_DIR),
         ],
-        val_check_interval=0.5,
+        val_check_interval=1.0,
     )
     trainer.fit(model, loader_train, loader_valid, ckpt_path=cfg.RESUME)
 
