@@ -21,7 +21,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks.progress import TQDMProgressBar
 from pytorch_lightning.loggers import TensorBoardLogger
 from lib.utils.time_utils import get_time_str
-from core.symn.datasets.BOPDataset_utils import build_BOP_train_dataset, batch_data_train
+from core.symn.datasets.BOPDataset_utils import build_BOP_train_dataset, build_BOP_test_dataset, batch_data_train
 from core.symn.models.SymNetLightning import build_model
 from core.symn.MetaInfo import MetaInfo
 
@@ -82,7 +82,7 @@ def main():
 
     # datasets
     data_train = build_BOP_train_dataset(cfg, cfg.DATASETS.TRAIN, args.debug)
-    data_valid = build_BOP_train_dataset(cfg, cfg.DATASETS.TEST, args.debug)
+    data_valid = build_BOP_test_dataset(cfg, cfg.DATASETS.TEST, args.debug, gt=True)
     loader_args = dict(
         batch_size=cfg.TRAIN.BATCH_SIZE,
         num_workers=cfg.TRAIN.NUM_WORKERS,
@@ -92,7 +92,6 @@ def main():
     )
     loader_train = torch.utils.data.DataLoader(data_train, drop_last=True, shuffle=True, **loader_args)
     loader_valid = torch.utils.data.DataLoader(data_valid, shuffle=False, **loader_args)
-
     # set output_dir
     if cfg.OUTPUT_DIR.lower() == "auto":
         out_str = cfg.MODEL.NAME + "_" + cfg.DATASETS.NAME

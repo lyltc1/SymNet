@@ -352,28 +352,23 @@ class SymNet(pl.LightningModule):
         return {"loss": losses, "pred": out_list}
     
     def validation_step_end(self, batch_parts):
-        out_list = []
-        for batch_part in batch_parts:
-            for pred in batch_part:
-                out_list.append(pred)
-        return out_list
+        adx_errors = []
+        for d in batch_parts['pred']:
+            adx_error = self.adx(d['R'], d['t'], d['gt_R'], d['gt_t'], pts=self.pts)
+            adx_errors.append(adx_error)
+        return adx_errors
 
     def validation_epoch_end(self, validation_step_outputs):
-        predictions = []
+        ADX_error = []
         for out in validation_step_outputs:
-            for d in out:
-                predictions.append(d)
-
-        ADX_passed = np.zeros(len(predictions))
-        ADX_passed_5 = np.zeros(len(predictions))
-        ADX_passed_2 = np.zeros(len(predictions))
-        ADX_error = np.zeros(len(predictions))
-        ADX_passed_posecnn_10 = np.zeros(len(predictions))
-        for i, d in enumerate(predictions):
-            adx_error = self.adx(d['R'], d['t'], d['gt_R'], d['gt_t'], pts=self.pts)
+            ADX_error.extend(out)
+        ADX_passed = np.zeros(len(ADX_error))
+        ADX_passed_5 = np.zeros(len(ADX_error))
+        ADX_passed_2 = np.zeros(len(ADX_error))
+        for i, d in tqdm(enumerate(ADX_error), desc='calculate ADX_passed'):
+            adx_error = ADX_error[i]
             if np.isnan(adx_error):
                 adx_error = 10000
-            ADX_error[i] = adx_error
             if adx_error < self.diameter * 0.1:
                 ADX_passed[i] = 1
             if adx_error < self.diameter * 0.05:
@@ -386,6 +381,7 @@ class SymNet(pl.LightningModule):
         self.log(f'valid/adx_10', ADX_passed, sync_dist=False)
         self.log(f'valid/adx_5', ADX_passed_5, sync_dist=False)
         self.log(f'valid/adx_2', ADX_passed_2, sync_dist=False)
+
 
     @torch.no_grad()
     def infer(self, x, K, AABB, obj_idx):
