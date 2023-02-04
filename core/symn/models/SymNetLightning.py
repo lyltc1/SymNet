@@ -365,8 +365,7 @@ class SymNet(pl.LightningModule):
         ADX_passed = np.zeros(len(ADX_error))
         ADX_passed_5 = np.zeros(len(ADX_error))
         ADX_passed_2 = np.zeros(len(ADX_error))
-        for i, d in tqdm(enumerate(ADX_error), desc='calculate ADX_passed'):
-            adx_error = ADX_error[i]
+        for i, adx_error in enumerate(ADX_error):
             if np.isnan(adx_error):
                 adx_error = 10000
             if adx_error < self.diameter * 0.1:
