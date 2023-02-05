@@ -124,8 +124,8 @@ def main():
         ],
         val_check_interval=1.0,
     )
-    # trainer.fit(model, loader_train, loader_valid, ckpt_path=cfg.RESUME)
-    trainer.validate(model, loader_valid, ckpt_path=cfg.RESUME)
+    trainer.fit(model, loader_train, loader_valid, ckpt_path=cfg.RESUME)
+    # trainer.validate(model, loader_valid, ckpt_path=cfg.RESUME)
 
 if __name__ == '__main__':
     main()

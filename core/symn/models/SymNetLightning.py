@@ -377,9 +377,9 @@ class SymNet(pl.LightningModule):
         ADX_passed = np.mean(ADX_passed)
         ADX_passed_5 = np.mean(ADX_passed_5)
         ADX_passed_2 = np.mean(ADX_passed_2)
-        self.log(f'valid/adx_10', ADX_passed, sync_dist=False)
-        self.log(f'valid/adx_5', ADX_passed_5, sync_dist=False)
-        self.log(f'valid/adx_2', ADX_passed_2, sync_dist=False)
+        self.log(f'valid/adx_10', ADX_passed, sync_dist=True)
+        self.log(f'valid/adx_5', ADX_passed_5, sync_dist=True)
+        self.log(f'valid/adx_2', ADX_passed_2, sync_dist=True)
 
 
     @torch.no_grad()
