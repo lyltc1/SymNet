@@ -113,25 +113,7 @@ def main():
         accelerator="gpu",
         strategy="ddp_find_unused_parameters_false",
         devices=args.gpus,
-        max_epochs = 70,  # in the first 70 epochs, do not use validation
-        callbacks=[
-            pl.callbacks.LearningRateMonitor(logging_interval="step"),
-            pl.callbacks.ModelCheckpoint(dirpath=cfg.OUTPUT_DIR, save_top_k=0,
-                                         save_last=True, monitor='valid/adx_10'),
-            TQDMProgressBar(refresh_rate=20),
-        ],
-        logger=[
-            TensorBoardLogger(save_dir=cfg.OUTPUT_DIR),
-        ],
-        val_check_interval=None,
-    )
-    trainer.fit(model, loader_train, loader_valid, ckpt_path=cfg.RESUME)
-
-    trainer = pl.Trainer(
-        accelerator="gpu",
-        strategy="ddp_find_unused_parameters_false",
-        devices=args.gpus,
-        max_epochs=cfg.TRAIN.TOTAL_EPOCHS - 70,
+        max_epochs = 400,  # in the first 70 epochs, do not use validation
         callbacks=[
             pl.callbacks.LearningRateMonitor(logging_interval="step"),
             pl.callbacks.ModelCheckpoint(dirpath=cfg.OUTPUT_DIR, save_top_k=1,
@@ -143,7 +125,9 @@ def main():
         ],
         val_check_interval=1.0,
     )
-    trainer.fit(model, loader_train, loader_valid, ckpt_path=osp.join(cfg.OUTPUT_DIR, 'last.ckpt'))
+    trainer.fit(model, loader_train, loader_valid, ckpt_path=cfg.RESUME)
+
+    # trainer.validate(model, loader_valid, ckpt_path=cfg.RESUME)
 
 if __name__ == '__main__':
     main()

@@ -313,7 +313,9 @@ class SymNet(pl.LightningModule):
             self.log(f'train/{k}', v)
         return losses
 
-    def validation_step(self, batch, batch_nb):
+    def validation_step(self, batch, batch_idx):
+        if self.current_epoch < 70:
+            return 0
         out_dict, loss_dict = self.step(x=batch['rgb_crop'],
                               K=batch["K_crop"],
                               AABB=batch["AABB_crop"],
@@ -352,6 +354,8 @@ class SymNet(pl.LightningModule):
         return {"loss": losses, "pred": out_list}
     
     def validation_step_end(self, batch_parts):
+        if self.current_epoch < 70:
+            return 0
         adx_errors = []
         for d in batch_parts['pred']:
             adx_error = self.adx(d['R'], d['t'], d['gt_R'], d['gt_t'], pts=self.pts)
@@ -359,6 +363,8 @@ class SymNet(pl.LightningModule):
         return adx_errors
 
     def validation_epoch_end(self, validation_step_outputs):
+        if self.current_epoch < 70:
+            return 0
         ADX_error = []
         for out in validation_step_outputs:
             ADX_error.extend(out)
