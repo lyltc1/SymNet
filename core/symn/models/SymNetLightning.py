@@ -252,6 +252,16 @@ class SymNet(pl.LightningModule):
                 scheduler=torch.optim.lr_scheduler.LambdaLR(opt, lambda i: min(1., i / sche_cfg.warm)),
                 interval='step'
             )
+        elif sche_cfg.type == "CosineAnnealingLR":
+            sched = dict(
+                scheduler=torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=sche_cfg.T_max, eta_min=sche_cfg.eta_min),
+                interval='epoch'
+            )
+        elif sche_cfg.type == "MultiStepLR":
+            sched = dict(
+                scheduler=torch.optim.lr_scheduler.MultiStepLR(opt, milestones=sche_cfg.milestones, gamma=sche_cfg.gamma),
+                interval='epoch'
+            )
         else:
             raise NotImplementedError
         return [opt], [sched]

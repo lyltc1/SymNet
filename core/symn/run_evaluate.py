@@ -1,8 +1,6 @@
 """
-python core/symn/run_evaluate.py \
---config-file output/SymNet_ycbv_obj15_20221212_223943/symn_ycbv_obj15_pl.py \
---ckpt output/SymNet_ycbv_obj15_20221212_223943/epoch=110-step=86468.ckpt \
---debug
+usages:
+python core/symn/run_evaluate.py --eval_folder output/SymNet_ycbv_obj15_xxx --debug
 """
 import os
 import sys
@@ -135,7 +133,7 @@ def main():
     cfg = Config.fromfile(args.config_file)
     # parse --use_last_ckpt, generate args.ckpt
     args.ckpt = os.path.join(args.eval_folder, 'last.ckpt')
-    if args.use_last_ckpt:
+    if not args.use_last_ckpt:
         for file in os.listdir(args.eval_folder):
             if os.path.splitext(file)[1] == '.ckpt' and os.path.splitext(file)[0].startswith("epoch"):
                 args.ckpt = os.path.join(args.eval_folder, file)

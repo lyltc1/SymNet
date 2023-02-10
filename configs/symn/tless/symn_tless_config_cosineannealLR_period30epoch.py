@@ -50,7 +50,7 @@ MODEL = dict(
 
 SOLVER = dict(
     OPTIMIZER_CFG=dict(type="Ranger", lr=1e-4, weight_decay=0),
-    LR_SCHEDULER_CFG=dict(type="LambdaLR", warm=1000),
+    LR_SCHEDULER_CFG=dict(type="CosineAnnealingLR", T_max=15, eta_min=0),
     # LR_SCHEDULER_CFG choose from ["LambdaLR", "MultiStepLR", "CosineAnnealingLR"],
     # need the scheduler's special params, e.g. 'milestones' for "MultiStepLR"
 )

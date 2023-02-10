@@ -1,4 +1,4 @@
-""" python core/symn/run_train.py --config-file configs/symn/tless/symn_tless_obj04_pl.py
+""" python core/symn/run_train.py --config-file configs/symn/tless/symn_tless_config_multiStepLR.py --obj_id 4 --debug True
     python core/symn/run_train.py --config-file configs/symn/kill/symn_kill_obj01_pl.py --debug True
 
 """
