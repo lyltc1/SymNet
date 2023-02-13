@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 class SymNet(pl.LightningModule):
     def __init__(self, cfg, backbone, geometry_net, pnp_net):
         super().__init__()
+        self.lr_schedulers_interval = None
         assert cfg.MODEL.NAME == "SymNet", cfg.MODEL.NAME
         self.cfg = cfg
         self.concat = cfg.MODEL.BACKBONE.CONCAT
@@ -248,19 +249,19 @@ class SymNet(pl.LightningModule):
         if sche_cfg == "" or sche_cfg is None:
             raise RuntimeError("please provide cfg.SOLVER.LR_SCHEDULER_CFG to build scheduler")
         if sche_cfg.type == "LambdaLR":
+            self.lr_schedulers_interval = "step"
             sched = dict(
                 scheduler=torch.optim.lr_scheduler.LambdaLR(opt, lambda i: min(1., i / sche_cfg.warm)),
-                interval='step'
             )
         elif sche_cfg.type == "CosineAnnealingLR":
+            self.lr_schedulers_interval = "epoch"
             sched = dict(
                 scheduler=torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=sche_cfg.T_max, eta_min=sche_cfg.eta_min),
-                interval='epoch'
             )
         elif sche_cfg.type == "MultiStepLR":
+            self.lr_schedulers_interval = "epoch"
             sched = dict(
                 scheduler=torch.optim.lr_scheduler.MultiStepLR(opt, milestones=sche_cfg.milestones, gamma=sche_cfg.gamma),
-                interval='epoch'
             )
         else:
             raise NotImplementedError
@@ -288,16 +289,20 @@ class SymNet(pl.LightningModule):
         assert torch.isfinite(losses).all(), loss_dict
         self.manual_backward(losses)
         optimizer = self.optimizers()
-        scheduler = self.lr_schedulers()
         optimizer.step()
         optimizer.zero_grad()
-        scheduler.step()
+        if self.lr_schedulers_interval == "step":
+            self.lr_schedulers().step()
         self.log(f'train/total_loss', losses)
         losses_eval = loss_dict["loss_PM_R"] + loss_dict["loss_site_xy"] + loss_dict["loss_site_z"]
         self.log(f'train/eval_loss', losses_eval, sync_dist=True)
         for k, v in loss_dict.items():
             self.log(f'train/{k}', v)
         return losses
+
+    def training_epoch_end(self, outputs):
+        if self.lr_schedulers_interval == "epoch":
+            self.lr_schedulers().step()
 
     def validation_step(self, batch, batch_nb):
         loss_dict = self.step(x=batch['rgb_crop'],
