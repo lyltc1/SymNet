@@ -30,6 +30,7 @@ class ASPPGeoNet(nn.Module):
     def __init__(self, cfg, in_channels=128, num_classes=1):
         super().__init__()
         self.concat = cfg.MODEL.BACKBONE.CONCAT
+        self.sep_branch = cfg.MODEL.GEOMETRY_NET.get("SEP_BRANCH", False)
         num_filters = 256
 
         self.conv_1x1_1 = nn.Conv2d(in_channels, num_filters, kernel_size=1)
@@ -60,12 +61,19 @@ class ASPPGeoNet(nn.Module):
         self.visib_mask_output_dim = 1 * num_classes
         self.amodal_mask_output_dim = 1 * num_classes
         self.binary_code_output_dim = 16 * num_classes
-        if self.concat:
+        if self.concat and (not self.sep_branch):
             self.conv_1x1_4 = nn.Conv2d(num_filters + 64, self.visib_mask_output_dim + self.amodal_mask_output_dim
                                         + self.binary_code_output_dim, kernel_size=1, padding=0)
-        else:
+        elif self.concat and self.sep_branch:
+            self.conv_1x1_4 = nn.Conv2d(num_filters + 64, self.visib_mask_output_dim + self.amodal_mask_output_dim
+                                        + self.binary_code_output_dim * 2, kernel_size=1, padding=0)
+        elif (not self.concat) and (not self.sep_branch):
             self.conv_1x1_4 = nn.Conv2d(num_filters, self.visib_mask_output_dim + self.amodal_mask_output_dim +
                                         self.binary_code_output_dim, kernel_size=1, padding=0)
+        elif (not self.concat) and self.sep_branch:
+            self.conv_1x1_4 = nn.Conv2d(num_filters, self.binary_code_output_dim * 2, kernel_size=1, padding=0)
+        else:
+            raise ArithmeticError
 
     def forward(self, x_high_feature, x_f64=None, x_f128=None):
         feature_map_h = x_high_feature.size()[2]
@@ -81,17 +89,27 @@ class ASPPGeoNet(nn.Module):
         out_img = F.interpolate(out_img, size=(feature_map_h, feature_map_w), mode="bilinear")
 
         out = torch.cat([out_1x1, out_3x3_1, out_3x3_2, out_3x3_3, out_img], 1)
-        out = F.relu(self.bn_conv_1x1_3(self.conv_1x1_3(out)))
+        out = F.relu(self.bn_conv_1x1_3(self.conv_1x1_3(out)))  # [bsz, 256, 32, 32]
 
         if self.concat:
-            x = self.upsample_1(out)
-            x = torch.cat([x, x_f64], 1)
-            x = self.upsample_2(x)
-            x = self.conv_1x1_4(torch.cat([x, x_f128], 1))
+            x = self.upsample_1(out)  # [bsz, 256, 64, 64]
+            x = torch.cat([x, x_f64], 1)  # [bsz, 320, 64, 64]
+            x = self.upsample_2(x)  # [bsz, 256, 128, 128]
+            x = torch.cat([x, x_f128], 1)
+            x = self.conv_1x1_4(x)  # [bsz, 18, 128, 128] if not sep_branch or [bsz, 34, 128, 128] if sep_branch
         else:
-            x = self.upsample_1(out)
-            x = self.upsample_2(x)
-            x = self.conv_1x1_4(x)
+            x = self.upsample_1(out)  # [bsz, 256, 64, 64]
+            x = self.upsample_2(x)  # [bsz, 256, 128, 128]
+            x = self.conv_1x1_4(x)   # [bsz, 18, 128, 128]  if not sep_branch or [bsz, 34, 128, 128] if sep_branch
 
-        visib_mask, amodal_mask, binary_code = torch.split(x, [self.visib_mask_output_dim, self.amodal_mask_output_dim, self.binary_code_output_dim], 1)
-        return visib_mask, amodal_mask, binary_code
+        if not self.sep_branch:
+            visib_mask, amodal_mask, binary_code = torch.split(x,
+                [self.visib_mask_output_dim, self.amodal_mask_output_dim, self.binary_code_output_dim], 1)
+            return visib_mask, amodal_mask, binary_code
+        else:
+            visib_mask, amodal_mask, binary_code, code_feature = torch.split(x,
+                [self.visib_mask_output_dim, self.amodal_mask_output_dim,
+                 self.binary_code_output_dim, self.binary_code_output_dim], 1)
+            return visib_mask, amodal_mask, binary_code, code_feature
+
+

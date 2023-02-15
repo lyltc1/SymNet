@@ -22,6 +22,8 @@ class SymNet(pl.LightningModule):
         self.cfg = cfg
         self.concat = cfg.MODEL.BACKBONE.CONCAT
         self.geometry_net_name = cfg.MODEL.GEOMETRY_NET.ARCH
+        self.sep_branch = cfg.MODEL.GEOMETRY_NET.get("SEP_BRANCH", False)
+        self.sep_branch_feature_sigmoid = cfg.MODEL.GEOMETRY_NET.get("SEP_BRANCH_FEATURE_SIGMOID", False)
         self.backbone = backbone
         self.geometry_net = geometry_net
         self.pnp_net = pnp_net
@@ -67,14 +69,20 @@ class SymNet(pl.LightningModule):
         if self.concat:
             if "aspp" in self.geometry_net_name:
                 x_f32, x_f64, x_f128 = self.backbone(x)
-                visib_mask, amodal_mask, binary_code = self.geometry_net(x_f32, x_f64, x_f128)
+                if not self.sep_branch:
+                    visib_mask, amodal_mask, binary_code = self.geometry_net(x_f32, x_f64, x_f128)
+                else:
+                    visib_mask, amodal_mask, binary_code, code_feature = self.geometry_net(x_f32, x_f64, x_f128)
             elif "cdpn" in self.geometry_net_name:
                 x_f8, x_f16, x_f32, x_f64 = self.backbone(x)
                 visib_mask, amodal_mask, binary_code = self.geometry_net(x_f8, x_f16, x_f32, x_f64)
         else:
             if "aspp" in self.geometry_net_name:
                 x_f32 = self.backbone(x)
-                visib_mask, amodal_mask, binary_code = self.geometry_net(x_f32)
+                if not self.sep_branch:
+                    visib_mask, amodal_mask, binary_code = self.geometry_net(x_f32)
+                else:
+                    visib_mask, amodal_mask, binary_code, code_feature = self.geometry_net(x_f32)
             elif "cdpn" in self.geometry_net_name:
                 x_f8 = self.backbone(x)
                 visib_mask, amodal_mask, binary_code = self.geometry_net(x_f8)
@@ -94,7 +102,12 @@ class SymNet(pl.LightningModule):
         visib_mask_prob = torch.sigmoid(visib_mask)
         amodal_mask_prob = torch.sigmoid(amodal_mask)
         binary_code_prob = torch.sigmoid(binary_code)
-        rot_param, SITE = self.pnp_net(visib_mask_prob, amodal_mask_prob, binary_code_prob)
+        if self.sep_branch_feature_sigmoid:
+            code_feature = torch.sigmoid(code_feature)
+        if not self.sep_branch:
+            rot_param, SITE = self.pnp_net(visib_mask_prob, amodal_mask_prob, binary_code_prob)
+        else:
+            rot_param, SITE = self.pnp_net(visib_mask_prob, amodal_mask_prob, code_feature)
         SITE[:, 2] *= 1000
         R_allo = self.ortho6d_to_mat_batch(rot_param)
         pred_ego_rot, pred_trans = pose_from_param(R_allo, SITE, K, res * 2, AABB)

@@ -15,8 +15,9 @@ MODEL = dict(
     ),
     GEOMETRY_NET=dict(
         ARCH="aspp",  # choose from ["aspp", "cdpn"]
-        SEP_BRANCH=False,  # if True, output of geometry_net will seperate to visib_mask/model/code and features
-                           # and send features to next parts of network. The features' shape is the same code
+        SEP_BRANCH=True,  # if True, output of geometry_net will seperate to visib_mask/model/code and features
+                          # and send features to next parts of network. The features' shape is the same as v/m/c
+        SEP_BRANCH_FEATURE_SIGMOID=True,  # the sep_branch out features will pass sigmoid module and pass to next net
         FREEZE=False,
         VISIB_MASK_LOSS_TYPE="L1",  # choose from ["BCE", "L1"]
         VISIB_MASK_LW=1,
