@@ -41,7 +41,7 @@ def main():
     parser.add_argument("--debug", type=bool, default=False, help="use one gpu and small batch size")
     parser.add_argument('--gpus', type=int, nargs='+', default=[0])
     parser.add_argument("--obj_id", type=int, nargs='+', default=[], required=True, help="the obj id to train")
-    parser.add_argument('--n-valid', type=int, default=100)
+    parser.add_argument('--small_dataset', action="store_true")
     args = parser.parse_args()
     # parse --config-file
     cfg = Config.fromfile(args.config_file)
@@ -83,6 +83,15 @@ def main():
     # datasets
     data_train = build_BOP_train_dataset(cfg, cfg.DATASETS.TRAIN, args.debug)
     data_valid = build_BOP_train_dataset(cfg, cfg.DATASETS.TEST, args.debug)
+    if args.small_dataset:
+        data_train, _ = torch.utils.data.random_split(
+            data_train, (4, len(data_train) - 4),
+            generator=torch.Generator().manual_seed(0),
+        )
+        data_valid, _ = torch.utils.data.random_split(
+            data_valid, (4, len(data_valid) - 4),
+            generator=torch.Generator().manual_seed(0),
+        )
     loader_args = dict(
         batch_size=cfg.TRAIN.BATCH_SIZE,
         num_workers=cfg.TRAIN.NUM_WORKERS,
@@ -110,9 +119,14 @@ def main():
     path = osp.join(cfg.OUTPUT_DIR, osp.basename(args.config_file))
     cfg.dump(path)
 
+    if cfg.MODEL.PNP_NET.get("NOT_FREEZE_EPOCH", 0) > 0:
+        strategy = None
+    else:
+        strategy = "ddp_find_unused_parameters_false"
+
     trainer = pl.Trainer(
         accelerator="gpu",
-        strategy="ddp_find_unused_parameters_false",
+        strategy=strategy,
         devices=args.gpus,
         callbacks=[
             pl.callbacks.LearningRateMonitor(logging_interval="step"),

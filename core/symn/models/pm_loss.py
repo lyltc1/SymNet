@@ -55,5 +55,4 @@ class PMLoss(nn.Module):
             weights = 1
 
         loss = self.loss_func(weights * points_est, weights * points_tgt)
-        loss_dict = {"loss_PM_R": 3 * loss * self.loss_weight}
-        return loss_dict
+        return 3 * loss * self.loss_weight

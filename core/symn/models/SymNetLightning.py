@@ -20,6 +20,8 @@ class SymNet(pl.LightningModule):
         self.lr_schedulers_interval = None
         assert cfg.MODEL.NAME == "SymNet", cfg.MODEL.NAME
         self.cfg = cfg
+        self.end_to_end = cfg.MODEL.get("END_TO_END", True)
+        self.pnp_net_not_freeze_epoch = cfg.MODEL.PNP_NET.get("NOT_FREEZE_EPOCH", 0)
         self.concat = cfg.MODEL.BACKBONE.CONCAT
         self.geometry_net_name = cfg.MODEL.GEOMETRY_NET.ARCH
         self.backbone = backbone
@@ -91,9 +93,15 @@ class SymNet(pl.LightningModule):
             binary_code = binary_code.view(bs, self.num_classes, 16, res, res)
             binary_code = binary_code[torch.arange(bs).to(device), obj_idx]
 
-        visib_mask_prob = torch.sigmoid(visib_mask)
-        amodal_mask_prob = torch.sigmoid(amodal_mask)
-        binary_code_prob = torch.sigmoid(binary_code)
+        if self.end_to_end:
+            visib_mask_prob = torch.sigmoid(visib_mask)
+            amodal_mask_prob = torch.sigmoid(amodal_mask)
+            binary_code_prob = torch.sigmoid(binary_code)
+        else:
+            visib_mask_prob = torch.sigmoid(visib_mask).detach()
+            amodal_mask_prob = torch.sigmoid(amodal_mask).detach()
+            binary_code_prob = torch.sigmoid(binary_code).detach()
+
         rot_param, SITE = self.pnp_net(visib_mask_prob, amodal_mask_prob, binary_code_prob)
         SITE[:, 2] *= 1000
         R_allo = self.ortho6d_to_mat_batch(rot_param)
@@ -187,14 +195,16 @@ class SymNet(pl.LightningModule):
                 norm_by_extent=pnp_net_cfg.PM_NORM_BY_EXTENT,
                 symmetric=pnp_net_cfg.PM_LOSS_SYM,
             )
-            loss_pm_dict = loss_func(
+            loss = loss_func(
                 pred_rots=R,
                 gt_rots=gt_R,
                 points=points,
                 extents=extents,
                 sym_infos=sym_infos,
-            )
-            loss_dict.update(loss_pm_dict)
+                )
+            if pnp_net_cfg.FREEZE:
+                loss = loss.detach()
+            loss_dict["loss_PM_R"] = loss
         # ---- SITE_xy loss ----
         if pnp_net_cfg.SITE_XY_LW > 0:
             if pnp_net_cfg.SITE_XY_LOSS_TYPE == "L1":
@@ -203,7 +213,10 @@ class SymNet(pl.LightningModule):
                 loss_func = nn.MSELoss(reduction="mean")
             else:
                 raise NotImplementedError
-            loss_dict["loss_site_xy"] = loss_func(SITE[:, :2], gt_SITE[:, :2, 0]) * pnp_net_cfg.SITE_XY_LW
+            loss = loss_func(SITE[:, :2], gt_SITE[:, :2, 0]) * pnp_net_cfg.SITE_XY_LW
+            if pnp_net_cfg.FREEZE:
+                loss = loss.detach()
+            loss_dict["loss_site_xy"] = loss
         # ---- SITE_z loss ----
         if pnp_net_cfg.SITE_Z_LW > 0:
             if pnp_net_cfg.SITE_Z_LOSS_TYPE == "L1":
@@ -212,15 +225,21 @@ class SymNet(pl.LightningModule):
                 loss_func = nn.MSELoss(reduction="mean")
             else:
                 raise NotImplementedError
-            loss_dict["loss_site_z"] = loss_func(SITE[:, 2], gt_SITE[:, 2, 0]) * pnp_net_cfg.SITE_Z_LW
+            loss = loss_func(SITE[:, 2], gt_SITE[:, 2, 0]) * pnp_net_cfg.SITE_Z_LW
+            if pnp_net_cfg.FREEZE:
+                loss = loss.detach()
+            loss_dict["loss_site_z"] = loss
         # ---- R allo sym loss ----
         if pnp_net_cfg.R_ALLO_SYM_LW > 0:
             if pnp_net_cfg.R_ALLO_SYM_LOSS_TYPE == "L1":
                 loss_func = nn.L1Loss(reduction="mean")
             else:
                 raise NotImplementedError
-            loss_dict["loss_allo_sym"] = loss_func(R_allo[:, :, self.sym_axis],
-                                                   gt_allo[:, :, self.sym_axis]) * pnp_net_cfg.R_ALLO_SYM_LW
+            loss = loss_func(R_allo[:, :, self.sym_axis],
+                       gt_allo[:, :, self.sym_axis]) * pnp_net_cfg.R_ALLO_SYM_LW
+            if pnp_net_cfg.FREEZE:
+                loss = loss.detach()
+            loss_dict["loss_allo_sym"] = loss
         return loss_dict
 
     def configure_optimizers(self):
@@ -303,6 +322,8 @@ class SymNet(pl.LightningModule):
     def training_epoch_end(self, outputs):
         if self.lr_schedulers_interval == "epoch":
             self.lr_schedulers().step()
+        if self.current_epoch >= self.pnp_net_not_freeze_epoch:
+            self.cfg.MODEL.PNP_NET.FREEZE = False
 
     def validation_step(self, batch, batch_nb):
         loss_dict = self.step(x=batch['rgb_crop'],
@@ -328,7 +349,6 @@ class SymNet(pl.LightningModule):
         self.log(f'valid/eval_loss', losses_eval, sync_dist=True)
         for k, v in loss_dict.items():
             self.log(f'valid/{k}', v, sync_dist=True)
-        
         return losses
 
     @torch.no_grad()
