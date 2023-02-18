@@ -14,47 +14,22 @@ from tqdm import tqdm
 import numpy as np
 import torch
 from mmcv import Config
-
 from bop_toolkit_lib import inout
-from bop_toolkit_lib.pose_error import add, adi
-
 from core.symn.MetaInfo import MetaInfo
 from core.symn.datasets.BOPDataset_utils import build_BOP_test_dataset, batch_data_test
 from core.symn.models.SymNetLightning import build_model
-from lib.utils.time_utils import get_time_str
+from lib.utils.time_utils import get_time_str, add_timing_to_list
 from core.symn.utils.visualize_utils import visualize_v2
 from core.symn.utils.renderer import ObjCoordRenderer
 from core.symn.utils.obj import load_objs
-
-
-# function to calculate ycbv metric
-def compute_auc_posecnn(errors):
-    errors = errors.copy()
-    d = np.sort(errors)
-    d[d > 0.1] = np.inf
-    accuracy = np.cumsum(np.ones(d.shape[0])) / d.shape[0]
-    ids = np.isfinite(d)
-    d = d[ids]
-    accuracy = accuracy[ids]
-    if len(ids) == 0 or ids.sum() == 0:
-        return np.nan
-    rec = d
-    prec = accuracy
-    mrec = np.concatenate(([0], rec, [0.1]))
-    mpre = np.concatenate(([0], prec, [prec[-1]]))
-    for i in np.arange(1, len(mpre)):
-        mpre[i] = max(mpre[i], mpre[i - 1])
-    i = np.arange(1, len(mpre))
-    ids = np.where(mrec[1:] != mrec[:-1])[0] + 1
-    ap = ((mrec[ids] - mrec[ids - 1]) * mpre[ids]).sum() * 10
-    return ap
+from core.symn.utils.pose_optimization import code_renderer, pose_optimization
 
 
 def write_cvs(evaluation_result_path, file_name_prefix, predictions):
     if not os.path.exists(evaluation_result_path):
         os.makedirs(evaluation_result_path)
     for obj_id, predict_list in predictions.items():
-        filename = file_name_prefix + '-test'
+        filename = file_name_prefix + '-optimize-test'
         filename = os.path.join(evaluation_result_path, filename + '.csv')
         with open(filename, "w") as f:
             f.write("scene_id,im_id,obj_id,score,R,t,time\n")
@@ -137,7 +112,7 @@ def main():
         for file in os.listdir(args.eval_folder):
             if os.path.splitext(file)[1] == '.ckpt' and os.path.splitext(file)[0].startswith("epoch"):
                 args.ckpt = os.path.join(args.eval_folder, file)
-    print(f"eval_ckpt: {args.ckpt}")
+    print(f"use ckpt {args.ckpt}")
     cfg.RESUME = args.ckpt
     # parse --debug
     cfg.DEBUG = args.debug
@@ -155,18 +130,17 @@ def main():
             os.mkdir(cfg.OUTPUT_DIR)
         if not os.path.exists(cfg.VIS_DIR):
             os.mkdir(cfg.VIS_DIR)
-    # get info used in calculate metric
+    # optimization init
     obj_ids = cfg.DATASETS.OBJ_IDS
+    assert len(obj_ids) == 1, "the optimization only support one object now!"
     dataset_name = cfg.DATASETS.NAME
     meta_info = MetaInfo(dataset_name)
-    models_3d = {obj_id: inout.load_ply(meta_info.model_tpath.format(obj_id=obj_id)) for obj_id in obj_ids}
-    models_info = inout.load_json(meta_info.models_info_path, keys_to_int=True)
-    diameters = {obj_id: models_info[obj_id]['diameter'] for obj_id in obj_ids}
-    sym_obj_id = cfg.DATASETS.SYM_OBJS_ID
-    if sym_obj_id == "bop":
-        sym_obj_id = [k for k, v in models_info.items() if 'symmetries_discrete' in v or 'symmetries_continuous' in v]
+
     objs = load_objs(meta_info, obj_ids)
-    renderer = ObjCoordRenderer(objs, [k for k in objs.keys()], cfg.DATASETS.RES_CROP)
+    render_256 = ObjCoordRenderer(objs, [k for k in objs.keys()], 256)
+    renderer_128 = ObjCoordRenderer(objs, [k for k in objs.keys()], 128)
+    pcd_tree, color = code_renderer(meta_info, obj_ids[0])
+
 
     # load model
     assert cfg.MODEL.NAME == "SymNet"
@@ -183,13 +157,15 @@ def main():
                                               collate_fn=batch_data_test,
                                               )
     predictions = dict()
+    time_forward, time_optimize = [], []
     for idx, batch in enumerate(tqdm(loader_test)):
-        out_dict = model.infer(
-            batch["rgb_crop"].to(device),
-            obj_idx=batch["obj_idx"].to(device),
-            K=batch["K_crop"].to(device),
-            AABB=batch["AABB_crop"].to(device),
-        )
+        with add_timing_to_list(time_forward):
+            out_dict = model.infer(
+                batch["rgb_crop"].to(device),
+                obj_idx=batch["obj_idx"].to(device),
+                K=batch["K_crop"].to(device),
+                AABB=batch["AABB_crop"].to(device),
+            )
         out_rots = out_dict["rot"].detach().cpu().numpy()  # [b,3,3]
         out_transes = out_dict["trans"].detach().cpu().numpy()  # [b,3]
 
@@ -205,59 +181,24 @@ def main():
             # get pose
             est_R = out_rots[i]
             est_t = out_transes[i]
+            K_d_2 = batch['K_crop'][0].cpu().numpy()
+            K_d_2[:2, :] = K_d_2[:2, :] / 2
+            with add_timing_to_list(time_optimize):
+                opti_R, opti_t, success = pose_optimization(est_R, est_t, K_d_2, obj_id,
+                                                            out_dict["amodal_mask_prob"][0, 0],
+                                                            out_dict["visib_mask_prob"][0, 0],
+                                                            out_dict["binary_code_prob"][0],
+                                                            renderer_128, pcd_tree, color
+                                                            )
 
             if obj_id not in predictions:
                 predictions[obj_id] = list()
-            result = {"score": score, "R": est_R, "t": est_t, "gt_R": gt_R, "gt_t": gt_t,
+            result = {"score": score, "R": opti_R, "t": opti_t, "gt_R": gt_R, "gt_t": gt_t,
                       "scene_id": scene_id, "im_id": im_id, "time": time + 100.}
-            visualize_v2(batch, cfg.VIS_DIR, out_dict, renderer=renderer)
+            visualize_v2(batch, os.path.join(cfg.VIS_DIR, "optimization"), out_dict, renderer=render_256)
             predictions[obj_id].append(result)
 
-    # calculate matric
-    for obj_id, predict_list in predictions.items():
-        adx = adi if obj_id in sym_obj_id else add
-        diameter = diameters[obj_id]
-        ADX_passed = np.zeros(len(predict_list))
-        ADX_passed_5 = np.zeros(len(predict_list))
-        ADX_passed_2 = np.zeros(len(predict_list))
-        ADX_error = np.zeros(len(predict_list))
-        ADX_passed_posecnn_10 = np.zeros(len(predict_list))
-        for i, d in enumerate(predict_list):
-            adx_error = adx(d['R'], d['t'], d['gt_R'], d['gt_t'], pts=models_3d[obj_id]["pts"])
-            if np.isnan(adx_error):
-                adx_error = 10000
-            ADX_error[i] = adx_error
-            if adx_error < diameter * 0.1:
-                ADX_passed[i] = 1
-            if adx_error < diameter * 0.05:
-                ADX_passed_5[i] = 1
-            if adx_error < diameter * 0.02:
-                ADX_passed_2[i] = 1
-            if adx_error < 100:
-                ADX_passed_posecnn_10[i] = 1
-        ADX_passed = np.mean(ADX_passed)
-        ADX_passed_5 = np.mean(ADX_passed_5)
-        ADX_passed_2 = np.mean(ADX_passed_2)
-        ADX_passed_posecnn_10 = np.mean(ADX_passed_posecnn_10)
-        AUC_ADX_error_posecnn = compute_auc_posecnn(ADX_error / 1000.0)
-        adx_str = 'adi' if obj_id in sym_obj_id else "add"
-        print(f"obj{obj_id}-{adx_str}_10d : {ADX_passed}")
-        print(f"obj{obj_id}-{adx_str}_5d : {ADX_passed_5}")
-        print(f"obj{obj_id}-{adx_str}_2d : {ADX_passed_2}")
-        print(f"obj{obj_id}-AUC_posecnn_{adx_str} : {AUC_ADX_error_posecnn}")
-        print(f"obj{obj_id}-_posecnn_{adx_str} : {ADX_passed_posecnn_10}")
-        print(f"diameter: {diameter}")
-        result_path = os.path.join(cfg.OUTPUT_DIR, "result.txt")
-        print('save ADD results to', result_path)
-        f = open(result_path, "w")
-        f.write(f"obj{obj_id}-{adx_str}_10d : {ADX_passed}")
-        f.write(f"obj{obj_id}-{adx_str}_5d : {ADX_passed_5}")
-        f.write(f"obj{obj_id}-{adx_str}_2d : {ADX_passed_2}")
-        f.write(f"obj{obj_id}-AUC_posecnn_{adx_str} : {AUC_ADX_error_posecnn}")
-        f.write(f"obj{obj_id}-_posecnn_{adx_str} : {ADX_passed_posecnn_10}")
-        f.write(f"diameter: {diameter}")
-        f.write("\n")
-    cvs_path = os.path.join(cfg.OUTPUT_DIR, 'result_bop/')
+    cvs_path = os.path.join(cfg.OUTPUT_DIR, 'result_bop_with_optimization/')
     write_cvs(cvs_path, cfg.MODEL.NAME + '_' + cfg.DATASETS.NAME, predictions)
 
 

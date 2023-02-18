@@ -2,8 +2,17 @@ from __future__ import division
 import timeit
 import time
 from datetime import datetime, timedelta
+from contextlib import contextmanager
 from . import logger
 
+
+@contextmanager
+def add_timing_to_list(l):
+    start = time.time()
+    try:
+        yield
+    finally:
+        l.append(time.time() - start)
 
 def average_time_of_func(func, num_iter=10000, ms=False):
     """
