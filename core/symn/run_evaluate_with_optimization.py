@@ -29,7 +29,7 @@ def write_cvs(evaluation_result_path, file_name_prefix, predictions):
     if not os.path.exists(evaluation_result_path):
         os.makedirs(evaluation_result_path)
     for obj_id, predict_list in predictions.items():
-        filename = file_name_prefix + '-optimize-test'
+        filename = file_name_prefix + '-test'
         filename = os.path.join(evaluation_result_path, filename + '.csv')
         with open(filename, "w") as f:
             f.write("scene_id,im_id,obj_id,score,R,t,time\n")
@@ -89,7 +89,7 @@ def write_cvs(evaluation_result_path, file_name_prefix, predictions):
                 # time
                 f.write(f"{str(time)}\n")
         os.system("python /home/lyltc/git/GDR-Net/bop_toolkit/scripts/eval_bop19_pose.py " + f"--result_filenames {os.path.abspath(filename)} " + f"--results_path {os.path.abspath(evaluation_result_path)} " +f"--eval_path {os.path.abspath(evaluation_result_path)}")
-        os.system("python /home/lyltc/git/GDR-Net/bop_toolkit/scripts/vis_est_poses.py " + f"--result_filenames {os.path.abspath(filename)} " + f"--output_path {os.path.abspath(evaluation_result_path)}")
+        # os.system("python /home/lyltc/git/GDR-Net/bop_toolkit/scripts/vis_est_poses.py " + f"--result_filenames {os.path.abspath(filename)} " + f"--output_path {os.path.abspath(evaluation_result_path)}")
 
 def main():
     parser = argparse.ArgumentParser()
@@ -137,7 +137,7 @@ def main():
     meta_info = MetaInfo(dataset_name)
 
     objs = load_objs(meta_info, obj_ids)
-    render_256 = ObjCoordRenderer(objs, [k for k in objs.keys()], 256)
+    renderer_256 = ObjCoordRenderer(objs, [k for k in objs.keys()], 256)
     renderer_128 = ObjCoordRenderer(objs, [k for k in objs.keys()], 128)
     pcd_tree, color = code_renderer(meta_info, obj_ids[0])
 
@@ -181,7 +181,7 @@ def main():
             # get pose
             est_R = out_rots[i]
             est_t = out_transes[i]
-            K_d_2 = batch['K_crop'][0].cpu().numpy()
+            K_d_2 = np.copy(batch['K_crop'][0].cpu().numpy())
             K_d_2[:2, :] = K_d_2[:2, :] / 2
             with add_timing_to_list(time_optimize):
                 opti_R, opti_t, success = pose_optimization(est_R, est_t, K_d_2, obj_id,
@@ -195,7 +195,7 @@ def main():
                 predictions[obj_id] = list()
             result = {"score": score, "R": opti_R, "t": opti_t, "gt_R": gt_R, "gt_t": gt_t,
                       "scene_id": scene_id, "im_id": im_id, "time": time + 100.}
-            visualize_v2(batch, os.path.join(cfg.VIS_DIR, "optimization"), out_dict, renderer=render_256)
+            # visualize_v2(batch, os.path.join(cfg.VIS_DIR, "optimization"), out_dict, renderer=renderer_256)
             predictions[obj_id].append(result)
 
     cvs_path = os.path.join(cfg.OUTPUT_DIR, 'result_bop_with_optimization/')

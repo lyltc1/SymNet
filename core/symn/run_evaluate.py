@@ -21,7 +21,7 @@ from bop_toolkit_lib.pose_error import add, adi
 from core.symn.MetaInfo import MetaInfo
 from core.symn.datasets.BOPDataset_utils import build_BOP_test_dataset, batch_data_test
 from core.symn.models.SymNetLightning import build_model
-from lib.utils.time_utils import get_time_str
+from lib.utils.time_utils import get_time_str, add_timing_to_list
 from core.symn.utils.visualize_utils import visualize_v2
 from core.symn.utils.renderer import ObjCoordRenderer
 from core.symn.utils.obj import load_objs
@@ -183,13 +183,15 @@ def main():
                                               collate_fn=batch_data_test,
                                               )
     predictions = dict()
+    time_forward = []
     for idx, batch in enumerate(tqdm(loader_test)):
-        out_dict = model.infer(
-            batch["rgb_crop"].to(device),
-            obj_idx=batch["obj_idx"].to(device),
-            K=batch["K_crop"].to(device),
-            AABB=batch["AABB_crop"].to(device),
-        )
+        with add_timing_to_list(time_forward):
+            out_dict = model.infer(
+                batch["rgb_crop"].to(device),
+                obj_idx=batch["obj_idx"].to(device),
+                K=batch["K_crop"].to(device),
+                AABB=batch["AABB_crop"].to(device),
+            )
         out_rots = out_dict["rot"].detach().cpu().numpy()  # [b,3,3]
         out_transes = out_dict["trans"].detach().cpu().numpy()  # [b,3]
 
@@ -212,7 +214,8 @@ def main():
                       "scene_id": scene_id, "im_id": im_id, "time": time + 100.}
             visualize_v2(batch, cfg.VIS_DIR, out_dict, renderer=renderer)
             predictions[obj_id].append(result)
-
+    time_forward = np.array(time_forward)
+    print("time_forward", np.mean(time_forward))
     # calculate matric
     for obj_id, predict_list in predictions.items():
         adx = adi if obj_id in sym_obj_id else add

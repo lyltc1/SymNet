@@ -114,7 +114,7 @@ def pose_optimization(R: np.ndarray, t: np.ndarray, K, obj_id,
     result = minimize(fun=objective, x0=pose, jac=lambda pose: objective(pose, return_grad=True), method=method)
     pose = result.x
     R = cv2.Rodrigues(pose[:3])[0]
-    t = pose[3]
+    t = pose[3:]
     return R, t, result.fun
 
 if __name__ == "__main__":
