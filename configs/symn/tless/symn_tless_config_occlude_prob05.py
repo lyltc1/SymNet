@@ -74,7 +74,7 @@ DATASETS = dict(
     OBJ_IDS=None,  # OBJ_IDS=[15, 18],  # should be consistent with NUM_CLASSES
     NUM_CLASSES=None,  # NUM_CLASSES=2,  # should be consistent with OBJ_IDS
     COLOR_AUG_PROB=0.8,
-    OCCLUDE_AUG_PROB=0.0,
+    OCCLUDE_AUG_PROB=0.5,
     BG_AUG_PROB=0.5,
     BG_AUG_TYPE="VOC",  # choose from ["VOC", "VOC_table"]
     SYM_OBJS_ID="bop",  # choose from ["bop", or [13, 16, 19, 20, 21]

@@ -15,7 +15,6 @@ class RgbLoader(BopDatasetAux):
         scene_id, img_id = inst['scene_id'], inst['img_id']
         fp = join(dataset.data_folder, f'{scene_id:06d}', dataset.img_folder_name, f'{img_id:06d}.{dataset.img_ext}')
         rgb = cv2.imread(fp, cv2.IMREAD_COLOR)[..., ::-1]
-        assert rgb is not None
         inst['rgb'] = rgb.copy() if self.copy else rgb
         return inst
 
@@ -35,7 +34,7 @@ class MaskLoader(BopDatasetAux):
         return inst
 
 class RandomRotatedMaskCrop(BopDatasetAux):
-    def __init__(self, crop_res: int, crop_scale=[1.5, 1.5], max_angle=0, mask_key='mask_visib',
+    def __init__(self, crop_res: int, crop_scale=[1.2, 1.5], max_angle=0, mask_key='mask_visib',
                  crop_keys=('rgb', 'mask_visib'), crop_keys_crop_res_divide2=('mask', 'mask_visib', 'code'),
                  offset_scale=1., use_bbox_est=False,
                  rgb_interpolation=(cv2.INTER_NEAREST, cv2.INTER_LINEAR, cv2.INTER_AREA, cv2.INTER_CUBIC)):

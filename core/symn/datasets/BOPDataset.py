@@ -133,6 +133,11 @@ class BopTrainDataset(torch.utils.data.Dataset):
             instance = aux(instance, self)
         return instance
 
+    def get_occlude_inst(self, i):
+        # used in OccludeAux
+        instance = self.instances[i].copy()
+        return instance
+
 
 class BopTestDataset(torch.utils.data.Dataset):
     def __init__(

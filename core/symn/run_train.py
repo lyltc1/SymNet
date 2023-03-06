@@ -1,6 +1,7 @@
-""" python core/symn/run_train.py --config-file configs/symn/tless/symn_tless_config_multiStepLR.py --obj_id 4 --debug True
-    python core/symn/run_train.py --config-file configs/symn/kill/symn_kill_obj01_pl.py --debug True
-
+""" usage:
+    python core/symn/run_train.py --config-file configs/symn/tless/symn_tless_config.py --obj_id 4
+    python core/symn/run_train.py --config-file configs/symn/tless/symn_tless_config.py --obj_id 4 --debug True
+    If you have jsut one gpu, use --debug True
 """
 
 import os

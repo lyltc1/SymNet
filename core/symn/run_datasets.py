@@ -1,4 +1,4 @@
-""" usage: python run_datasets.py --config-file configs/symn/tless/symn_tless_obj04.py
+""" usage: python run_datasets.py --config-file configs/symn/tless/symn_tless_config.py --obj_id 1
     :param train: True for train dataset, False for test dataset
     :param debug: True for not using KeyFilterOutAux
     :param no_detection: used when train==False, if True, no detection result used
@@ -17,8 +17,9 @@ from core.symn.datasets.std_auxs import denormalize
 
 parser = my_default_argument_parser()
 parser.add_argument("--train", default=True, help="True for train dataset, False for test dataset")
-parser.add_argument("--debug", default=False, help="True for not using KeyFilterOutAux")
+parser.add_argument("--debug", default=True, help="True for not using KeyFilterOutAux")
 parser.add_argument("--no_detection", default=False, help="used when train==False, if True, no detection result used")
+parser.add_argument("--obj_id", type=int, nargs='+', default=[], required=True, help="the obj id")
 args = parser.parse_args()
 cfg = Config.fromfile(args.config_file)
 
@@ -40,6 +41,14 @@ if no_detection is False:
 else:
     iprint("no detection file")
     cfg.DATASETS.TEST_DETECTION_PATH = None
+
+# parse --obj_id
+if isinstance(args.obj_id, list):
+    cfg.DATASETS.OBJ_IDS = args.obj_id
+else:
+    cfg.DATASETS.OBJ_IDS = [args.obj_id, ]
+cfg.DATASETS.NUM_CLASSES = len(cfg.DATASETS.OBJ_IDS)
+
 args.num_gpus = 1
 args.num_machines = 1
 cfg.TRAIN.NUM_WORKERS = 0
@@ -56,7 +65,7 @@ else:
 
 obj_ids = cfg.DATASETS.OBJ_IDS
 res_crop = cfg.DATASETS.RES_CROP
-window_names = ['rgb_crop', 'mask_crop', 'mask_visib_crop', 'obj_coord']
+window_names = ['rgb_crop', 'mask_crop', 'mask_visib_crop', 'obj_coord', 'other_image', 'other_mask']
 for j, name in enumerate(window_names):
     cv2.namedWindow(name, cv2.WINDOW_KEEPRATIO)
     cv2.resizeWindow(name, res_crop, res_crop)
@@ -77,8 +86,8 @@ while True:
     print()
     print('------------ new input -------------')
     inst = data[data_i]
-    obj_idx = inst['obj_idx']
-    print(f'i: {data_i}, obj_id: {obj_ids[obj_idx]}')
+    obj_id = inst['obj_id']
+    print(f'i: {data_i}, obj_id: {obj_id}')
     if 'iou' in inst:
         print('iou:', inst['iou'], 'det_score', inst['det_score'])
     rgb_crop = inst['rgb_crop']
@@ -90,9 +99,15 @@ while True:
         data_i = np.random.randint(len(data))
         continue
 
+    cv2.imshow('rgb', inst['rgb'][..., ::-1])
     cv2.imshow('rgb_crop', rgb_crop[..., ::-1])
     cv2.imshow('mask_crop', mask_crop)
     cv2.imshow('mask_visib_crop', mask_visib_crop)
+
+    if 'other_image' in inst.keys():
+        cv2.imshow('other_image', inst['other_image'][..., ::-1])
+    if 'other_mask' in inst.keys():
+        cv2.imshow('other_mask', inst['other_mask'])
 
     if 'obj_coord' in inst.keys():
         obj_coord = inst['obj_coord']

@@ -15,7 +15,8 @@ from lib.utils.utils import iprint
 from .BOPDataset import BopTrainDataset, BopTestDataset
 from .GDRN_aux import AugRgbAux, ReplaceBgAux
 from .std_auxs import RgbLoader, MaskLoader, RandomRotatedMaskCrop, NormalizeAux, KeyFilterOutAux
-from .symn_aux import GTLoader, GT2CodeAux, PosePresentationAux, LoadSymInfoExtentsAux, LoadPointsAux
+from .symn_aux import GTLoader, GT2CodeAux, OccludeAux,\
+                      PosePresentationAux, LoadSymInfoExtentsAux, LoadPointsAux
 
 
 class EmptyDataset(torch.utils.data.Dataset):
@@ -38,8 +39,8 @@ def balanced_dataset_concat(a, b):
     return data
 
 
-def get_aux(cfg, gt, aug_bg=False, aug_rgb=False, detection=False, debug=False):
-    auxs = [RgbLoader()]
+def get_aux(cfg, gt, aug_bg=False, aug_rgb=False, aug_occ=False, detection=False, debug=False):
+    auxs = [RgbLoader(), ]
     if gt is True:
         if detection:
             crop_aux = RandomRotatedMaskCrop(cfg.DATASETS.RES_CROP, use_bbox_est=True, offset_scale=0.,
@@ -52,11 +53,10 @@ def get_aux(cfg, gt, aug_bg=False, aug_rgb=False, detection=False, debug=False):
                                              crop_keys_crop_res_divide2=('mask', 'mask_visib', 'GT'),
                                              rgb_interpolation=cv2.INTER_LINEAR)
         # train_aux
-        auxs.extend([MaskLoader(),
-                     GTLoader(),
-                     crop_aux.definition_aux,
-                     crop_aux.apply_aux,
-                     ])
+        auxs.extend([MaskLoader(), GTLoader(), ])
+        if aug_occ:
+            auxs.append(OccludeAux(prob=cfg.DATASETS.OCCLUDE_AUG_PROB))
+        auxs.extend([crop_aux.definition_aux, crop_aux.apply_aux, ])
         if aug_bg is True:
             auxs.extend([ReplaceBgAux(cfg.DATASETS.BG_AUG_PROB, cfg.DATASETS.BG_AUG_TYPE), ])
         if aug_rgb is True:
@@ -93,17 +93,17 @@ def build_BOP_train_dataset(cfg, dataset_type, debug=False):
     for name in dataset_type:
         if name == "train_real" or name == "train_primesense":
             # we use both ReplaceBgAux and AugRgbAux in real dataset
-            auxs_real = get_aux(cfg, gt=True, aug_bg=True, aug_rgb=True, debug=debug)
+            auxs_real = get_aux(cfg, gt=True, aug_occ=True, aug_bg=True, aug_rgb=True, debug=debug)
             real_dataset = BopTrainDataset(meta_info, name, obj_ids=obj_ids, auxs=auxs_real)
             dataset.append(real_dataset)
         elif name == "train_pbr":
             # we do not replace background in BOP pbr dataset
-            auxs_pbr = get_aux(cfg, gt=True, aug_bg=False, aug_rgb=True, debug=debug)
+            auxs_pbr = get_aux(cfg, gt=True, aug_occ=True, aug_bg=False, aug_rgb=True, debug=debug)
             pbr_dataset = BopTrainDataset(meta_info, name, obj_ids=obj_ids, auxs=auxs_pbr)
             dataset.append(pbr_dataset)
         elif name == "test" or name == "test_primesense":
             # use only for debug
-            auxs = get_aux(cfg, gt=True, aug_bg=False, aug_rgb=False, debug=debug)
+            auxs = get_aux(cfg, gt=True, aug_occ=False, aug_bg=False, aug_rgb=False, debug=debug)
             test_dataset = BopTrainDataset(meta_info, name, obj_ids=obj_ids, auxs=auxs)
             dataset.append(test_dataset)
         else:

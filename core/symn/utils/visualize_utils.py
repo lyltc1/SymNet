@@ -22,34 +22,56 @@ def preprogress_rgb(rgb: Union[np.ndarray, torch.Tensor]):
     rgb = rgb.astype(np.uint8)
     return rgb
 
+def show_rgb(windows_name: str, rgb: Union[np.ndarray, torch.Tensor]):
+    cv2.imshow(windows_name, preprogress_rgb(rgb)[..., ::-1])
 
 def preprogress_mask(mask: Union[np.ndarray, torch.Tensor]):
     if isinstance(mask, torch.Tensor):  # convert to numpy
         mask = mask.detach().cpu().numpy()
-    if len(mask.shape) == 3:  # convert [1, h, w] to [h, w]
+    while len(mask.shape) > 2:  # convert [1, h, w] to [h, w]
         mask = mask[0]
     if mask.max() < 1.0001:
         mask = mask * 255.
     mask = mask.astype(np.uint8)
     return mask
 
+def show_mask(windows_name: str, mask: Union[np.ndarray, torch.Tensor]):
+    cv2.imshow(windows_name, preprogress_mask(mask))
 
-def show_mask(windows_name: str, mask: np.ndarray):
-    cv2.imshow(windows_name, mask)
-    cv2.waitKey(0)
+def show_mask_contour(windows_name: str, rgb, mask_list, threshold=128):
+    color = ((0, 255, 0), (0, 0, 255),)
+    rgb = preprogress_rgb(rgb)
+    rgb = cv2.resize(rgb, (rgb.shape[0] >> 1, rgb.shape[1] >> 1), interpolation=cv2.INTER_LINEAR)
+    for m, c in zip(mask_list, color):
+        m = preprogress_mask(m)
+        mask = np.zeros(m.shape, dtype=np.uint8)
+        mask[m > threshold] = 1
+        mask_contour, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        cv2.drawContours(rgb, mask_contour, -1, c, 1)
+    cv2.imshow(windows_name, rgb[..., ::-1])
 
-def preprogress_code(code: Union[np.ndarray, torch.Tensor]):
+def preprogress_code(code: Union[np.ndarray, torch.Tensor], last=17):
+    """ preprogress code to an image to be show, last is from [0, last) need be show """
     if isinstance(code, torch.Tensor):  # convert to numpy
         code = code.detach().cpu().numpy()
+    while len(code.shape) > 3:  # convert [1, 16, h, w] to [16, h, w]
+        code = code[0]
     code = (code * 255).astype(np.uint8)
     if code.shape[0] == code.shape[1]:
         code = code.transpose((2, 0, 1))
-    code = np.column_stack([code[i] for i in range(len(code))])
+    last = min(len(code), last)
+    code = np.column_stack([code[i] for i in range(last)])
     return code
 
 def show_code(windows_name: str, code: np.ndarray):
     cv2.imshow(windows_name, code)
-    cv2.waitKey(0)
+
+def show_mask_code(window_name: str, mask1, mask2, code, last_code=5):
+    mask1 = preprogress_mask(mask1)
+    mask2 = preprogress_mask(mask2)
+    code = preprogress_code(code, last_code)
+    stack = np.column_stack([mask1, mask2, code])
+    cv2.imshow(window_name, stack)
 
 def preprogress_pose(obj_id, renderer, K, R, t, rgb):
     if isinstance(K, torch.Tensor):
@@ -60,11 +82,16 @@ def preprogress_pose(obj_id, renderer, K, R, t, rgb):
         t = t.detach().cpu().numpy()
     if len(t.shape) == 1:  # convert [3,] to  [3, 1]
         t = t[:, np.newaxis]
+    rgb = preprogress_rgb(rgb)
     render = renderer.render(obj_id, K, R, t)
     render_mask = render[..., 3] == 1.
     pose_img = rgb.copy()
     pose_img[render_mask] = pose_img[render_mask] * 0.5 + render[..., :3][render_mask] * 0.25 * 255 + 0.25 * 255
     return pose_img
+
+def show_pose(window_name: str, K, R, t, rgb, renderer, obj_id):
+    pose_img = preprogress_pose(obj_id, renderer, K, R, t, rgb)
+    cv2.imshow(window_name, pose_img[..., ::-1])
 
 def visualize_v2(inputs, out_dir, out_dict=None, renderer=None, sub_file=None):
     """ out_dir is cfg.VIS_DIR, if iteration is not None, make subdir
@@ -129,3 +156,4 @@ def visualize_v2(inputs, out_dir, out_dict=None, renderer=None, sub_file=None):
     cv2.imwrite(save_path, concat_img_channel3[..., ::-1])
     save_path = join(out_dir, str(scene_id)+'_'+str(img_id)+'_'+str(i_id)+'inter.png')
     cv2.imwrite(save_path, concat_img_channel1)
+
