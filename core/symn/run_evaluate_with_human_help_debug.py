@@ -203,7 +203,9 @@ if __name__ == "__main__":
         amodal_mask_prob = out_dict["amodal_mask_prob"]
         code_prob = out_dict["binary_code_prob"]
         show_mask_code('est visib amodal code', visib_mask_prob, amodal_mask_prob, code_prob)
+        cv2.namedWindow('gt est mask contour', cv2.WINDOW_NORMAL)
         show_mask_contour('gt est mask contour', rgb_crop, [mask_crop, amodal_mask_prob])
+        cv2.namedWindow('gt est visib mask contour', cv2.WINDOW_NORMAL)
         show_mask_contour('gt est visib mask contour', rgb_crop, [mask_visib_crop, visib_mask_prob])
 
         K = inst['K_crop']
@@ -260,4 +262,21 @@ if __name__ == "__main__":
                         GT2CodeAux(), NormalizeAux()]
                 for aux in auxs:
                     inst = aux(inst, None)
+                break
+            elif key == ord('n'):
+                print('mode: find particular image')
+                flag = False
+                scene = int(input('input the scene'))
+                image = int(input('input the image id'))
+                for i, inst in enumerate(data):
+                    if inst['scene_id'] == scene and inst['img_id'] == image:
+                        flag = True
+                        data_i = i
+                        break
+                if flag:
+                    print(f"find scene {scene} image {image}")
+                    print(f"current data_i is {data_i}")
+                else:
+                    print(f"can not find scene {scene} image {image}")
+                    print(f"current data_i is {data_i}")
                 break

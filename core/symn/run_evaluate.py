@@ -150,11 +150,12 @@ def main():
             out_str += f"_obj{obj_id}"
         out_str += '_' + get_time_str()
         cfg.OUTPUT_DIR = os.path.join(cfg.OUTPUT_ROOT, out_str)
+    if cfg.VIS_DIR is None:
         cfg.VIS_DIR = os.path.join(cfg.OUTPUT_DIR, "visualize")
-        if not os.path.exists(cfg.OUTPUT_DIR):
-            os.mkdir(cfg.OUTPUT_DIR)
-        if not os.path.exists(cfg.VIS_DIR):
-            os.mkdir(cfg.VIS_DIR)
+    if not os.path.exists(cfg.OUTPUT_DIR):
+        os.mkdir(cfg.OUTPUT_DIR)
+    if not os.path.exists(cfg.VIS_DIR):
+        os.mkdir(cfg.VIS_DIR)
     # get info used in calculate metric
     obj_ids = cfg.DATASETS.OBJ_IDS
     dataset_name = cfg.DATASETS.NAME

@@ -143,6 +143,7 @@ class BopTestDataset(torch.utils.data.Dataset):
     def __init__(
             self, meta_info: MetaInfo, folder_name, obj_ids: Sequence[int],
             auxs: Sequence['BopDatasetAux'] = tuple(), detections=None, keyframe=None,
+            min_det_score=0.4
     ):
         self.meta_info = meta_info
         bop_dataset_folder = meta_info.bop_dataset_folder
@@ -177,7 +178,7 @@ class BopTestDataset(torch.utils.data.Dataset):
                 found_detections = []
                 detection_list_scene_img = detections[str(scene_id) + '/' + str(im_id)]
                 for detection in detection_list_scene_img:
-                    if detection['obj_id'] == obj_id:
+                    if detection['obj_id'] == obj_id and detection['det_score'] > min_det_score:
                         found_detections.append(detection)
                 if len(found_detections) == 0:
                     iprint(f"not find detection for scene_id {scene_id} img_id {im_id} obj_id {obj_id}")
