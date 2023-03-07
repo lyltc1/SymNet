@@ -166,6 +166,8 @@ if __name__ == "__main__":
     print('With an opencv window active:')
     print("press 'a', 'd' and 'x'(random) to get a new input image,")
     print("press 'q' to quit.")
+    print("press 'c' to recrop")
+    print("press 'n' to input scene id and image id")
     data_i = 0
     current_data_i = -1
     while True:
