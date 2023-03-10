@@ -33,7 +33,8 @@ from core.symn.datasets.BOPDataset_utils import build_BOP_test_dataset, build_BO
 from core.symn.models.SymNetLightning import build_model
 from core.symn.utils.renderer import ObjCoordRenderer
 from core.symn.utils.obj import load_objs
-from core.symn.utils.visualize_utils import show_rgb, show_mask_contour, show_mask_code, show_pose
+from core.symn.utils.visualize_utils import show_rgb, show_mask_contour, show_mask_code, show_pose,\
+                                            preprogress_mask, preprogress_rgb
 from core.symn.datasets.std_auxs import RandomRotatedMaskCrop, NormalizeAux
 from core.symn.datasets.symn_aux import GT2CodeAux
 
@@ -59,12 +60,13 @@ class CropSelector:
     select crop region by human
     """
 
-    def __init__(self):
+    def __init__(self, is_square=True):
         self.region = []
         self.image = None
         self.start_pos = None
         self.end_pos = None
         self.is_drawing = None
+        self.is_square = is_square
 
     def draw_crop(self, img_bgr, window_name):
         self.image = img_bgr.copy()
@@ -92,7 +94,8 @@ class CropSelector:
     def mouse_callback(self, event, x, y, flags, params):
         if event == cv2.EVENT_MOUSEMOVE:
             if self.is_drawing:
-                y = x - self.start_pos[0] + self.start_pos[1]
+                if self.is_square:
+                    y = x - self.start_pos[0] + self.start_pos[1]
                 self.end_pos = (x, y)
         if event == cv2.EVENT_LBUTTONDOWN:
             self.is_drawing = True
@@ -201,8 +204,9 @@ if __name__ == "__main__":
         code_crop = inst["code_crop"]
         show_mask_code('gt visib amodal code', mask_visib_crop, mask_crop, code_crop)
 
-        visib_mask_prob = out_dict["visib_mask_prob"]
+        inst['visib_mask_prob'] = visib_mask_prob = out_dict["visib_mask_prob"]
         amodal_mask_prob = out_dict["amodal_mask_prob"]
+
         code_prob = out_dict["binary_code_prob"]
         show_mask_code('est visib amodal code', visib_mask_prob, amodal_mask_prob, code_prob)
         cv2.namedWindow('gt est mask contour', cv2.WINDOW_NORMAL)
@@ -265,6 +269,35 @@ if __name__ == "__main__":
                 for aux in auxs:
                     inst = aux(inst, None)
                 break
+            elif key == ord('v'):
+                print('mode:crop and padding with zero on rgb_crop')
+                Ms = np.concatenate((inst['M_crop'], [[0, 0, 1]]))
+                bbox_est = inst['bbox_est']
+                bbox_est = np.array(((bbox_est[0], bbox_est[1], 1),(bbox_est[2], bbox_est[3], 1)))
+                bbox_est_in_crop = Ms @ bbox_est.T
+                left, top, right, down = int(bbox_est_in_crop[0, 0]), int(bbox_est_in_crop[1, 0]), \
+                                         int(bbox_est_in_crop[0, 1]), int(bbox_est_in_crop[1, 1])
+                tmp_mask = np.zeros_like(inst['rgb_crop'])
+                tmp_mask[:, top:down+1, left:right+1] = 1
+                inst['rgb_crop'] *= tmp_mask
+                break
+
+            elif key == ord('g'):
+                print('mode: choose region and set zero to test occlusion influence')
+                print('drag a crop region on windows_name=\'rgb_crop\', press q to quit, you can drag many times')
+                cs = CropSelector(is_square=False)
+                left, top, right, down = cs.draw_crop(preprogress_rgb(rgb_crop)[..., ::-1], 'rgb_crop')
+                tmp_mask = np.ones_like(inst['rgb_crop'])
+                tmp_mask[:, top:down + 1, left:right + 1] = 0
+                inst['rgb_crop'] *= tmp_mask
+                break
+
+            elif key == ord('b'):
+                print('mode: use the predict visib mask to mask rgb')
+                visib_mask_prob = cv2.resize(preprogress_mask(inst['visib_mask_prob']), (256, 256))
+                inst['rgb_crop'] *= (visib_mask_prob != 0)
+                break
+
             elif key == ord('n'):
                 print('mode: find particular image')
                 flag = False
@@ -281,4 +314,9 @@ if __name__ == "__main__":
                 else:
                     print(f"can not find scene {scene} image {image}")
                     print(f"current data_i is {data_i}")
+                break
+
+            elif key == ord('r'):
+                print('mode: rotaion anticlockwise')
+                inst['rgb_crop'] = np.flip(inst['rgb_crop'], axis=-1).swapaxes(-1, -2).copy()
                 break

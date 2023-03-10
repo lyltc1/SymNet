@@ -143,7 +143,7 @@ class BopTestDataset(torch.utils.data.Dataset):
     def __init__(
             self, meta_info: MetaInfo, folder_name, obj_ids: Sequence[int],
             auxs: Sequence['BopDatasetAux'] = tuple(), detections=None, keyframe=None,
-            min_det_score=0.4
+            min_det_score=0.01
     ):
         self.meta_info = meta_info
         bop_dataset_folder = meta_info.bop_dataset_folder
