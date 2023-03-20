@@ -45,10 +45,12 @@ def get_aux(cfg, gt, aug_bg=False, aug_rgb=False, aug_occ=False, detection=False
         if detection:
             crop_aux = RandomRotatedMaskCrop(cfg.DATASETS.RES_CROP, use_bbox_est=True, offset_scale=0.,
                                              crop_keys=('rgb', 'mask_visib'),
+                                             crop_scale=[1.3, 1.3],
                                              crop_keys_crop_res_divide2=('mask', 'mask_visib', 'GT'),
                                              rgb_interpolation=cv2.INTER_LINEAR)
         else:
             crop_aux = RandomRotatedMaskCrop(cfg.DATASETS.RES_CROP, mask_key='mask_visib',
+                                             crop_scale=[1.2, 1.5],
                                              crop_keys=('rgb', 'mask_visib'),
                                              crop_keys_crop_res_divide2=('mask', 'mask_visib', 'GT'),
                                              rgb_interpolation=cv2.INTER_LINEAR)

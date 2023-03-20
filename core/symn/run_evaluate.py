@@ -16,7 +16,6 @@ import torch
 from mmcv import Config
 
 from bop_toolkit_lib import inout
-from bop_toolkit_lib.pose_error import add, adi
 
 from core.symn.MetaInfo import MetaInfo
 from core.symn.datasets.BOPDataset_utils import build_BOP_test_dataset, batch_data_test
@@ -114,7 +113,7 @@ def write_cvs(evaluation_result_path, file_name_prefix, predictions):
                 # time
                 f.write(f"{str(time)}\n")
         os.system("python /home/lyltc/git/GDR-Net/bop_toolkit/scripts/eval_bop19_pose.py " + f"--result_filenames {os.path.abspath(filename)} " + f"--results_path {os.path.abspath(evaluation_result_path)} " +f"--eval_path {os.path.abspath(evaluation_result_path)}")
-        os.system("python /home/lyltc/git/GDR-Net/bop_toolkit/scripts/vis_est_poses.py " + f"--result_filenames {os.path.abspath(filename)} " + f"--output_path {os.path.abspath(evaluation_result_path)}")
+        # os.system("python /home/lyltc/git/GDR-Net/bop_toolkit/scripts/vis_est_poses.py " + f"--result_filenames {os.path.abspath(filename)} " + f"--output_path {os.path.abspath(evaluation_result_path)}")
 
 def main():
     parser = argparse.ArgumentParser()
@@ -150,12 +149,12 @@ def main():
             out_str += f"_obj{obj_id}"
         out_str += '_' + get_time_str()
         cfg.OUTPUT_DIR = os.path.join(cfg.OUTPUT_ROOT, out_str)
-    if cfg.VIS_DIR is None:
-        cfg.VIS_DIR = os.path.join(cfg.OUTPUT_DIR, "visualize")
     if not os.path.exists(cfg.OUTPUT_DIR):
         os.mkdir(cfg.OUTPUT_DIR)
+    cvs_path = os.path.join(cfg.OUTPUT_DIR, 'result_bop/')
+    cfg.VIS_DIR = os.path.join(cvs_path, "visualize")
     if not os.path.exists(cfg.VIS_DIR):
-        os.mkdir(cfg.VIS_DIR)
+        os.makedirs(cfg.VIS_DIR)
     # get info used in calculate metric
     obj_ids = cfg.DATASETS.OBJ_IDS
     dataset_name = cfg.DATASETS.NAME
@@ -213,11 +212,11 @@ def main():
                 predictions[obj_id] = list()
             result = {"score": score, "R": est_R, "t": est_t, "gt_R": gt_R, "gt_t": gt_t,
                       "scene_id": scene_id, "im_id": im_id, "time": time + 100.}
-            visualize_v2(batch, cfg.VIS_DIR, out_dict, renderer=renderer)
+            # visualize_v2(batch, cfg.VIS_DIR, out_dict, renderer=renderer)
             predictions[obj_id].append(result)
     time_forward = np.array(time_forward)
     print("time_forward", np.mean(time_forward))
-    cvs_path = os.path.join(cfg.OUTPUT_DIR, 'result_bop/')
+
     write_cvs(cvs_path, cfg.MODEL.NAME + '_' + cfg.DATASETS.NAME, predictions)
 
 
