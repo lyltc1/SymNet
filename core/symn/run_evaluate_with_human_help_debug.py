@@ -162,6 +162,7 @@ if __name__ == "__main__":
 
     # load data
     data = build_BOP_test_dataset(cfg, cfg.DATASETS.TEST, debug=True)
+    # data = build_BOP_train_dataset(cfg, ['test_primesense'], debug=True)
     # data = build_BOP_test_dataset(cfg, cfg.DATASETS.TEST, debug=cfg.DEBUG)
 
     # initialize opencv windows
@@ -180,14 +181,15 @@ if __name__ == "__main__":
             inst = data[data_i]
             current_data_i = data_i
         obj_id = inst['obj_id']
-        print(f"i: {data_i}, obj_id: {obj_id}")
+        print(f"i: {data_i}, obj_id: {obj_id}, scene_id: {inst['scene_id']}, img_id: {inst['img_id']}")
         rgb = np.copy(inst['rgb'])
-        cv2.rectangle(rgb, (int(inst['bbox_est'][0]), int(inst['bbox_est'][1])),
-                      (int(inst['bbox_est'][2]), int(inst['bbox_est'][3])), (0, 0, 255), 1)
-        cv2.putText(rgb, 'bbox_est', (int(inst['bbox_est'][0]), int(inst['bbox_est'][1])),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255))
+        if 'bbox_est' in inst.keys():
+            cv2.rectangle(rgb, (int(inst['bbox_est'][0]), int(inst['bbox_est'][1])),
+                          (int(inst['bbox_est'][2]), int(inst['bbox_est'][3])), (0, 0, 255), 1)
+            cv2.putText(rgb, 'bbox_est', (int(inst['bbox_est'][0]), int(inst['bbox_est'][1])),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255))
         cv2.rectangle(rgb, (int(inst['AABB_crop'][0]), int(inst['AABB_crop'][1])),
-                      (int(inst['AABB_crop'][2]), int(inst['AABB_crop'][3])), (255, 0, 0), 1)
+                        (int(inst['AABB_crop'][2]), int(inst['AABB_crop'][3])), (255, 0, 0), 1)
         cv2.putText(rgb, 'crop', (int(inst['AABB_crop'][0]), int(inst['AABB_crop'][1])),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0))
         cv2.imshow('rgb', rgb[..., ::-1])
@@ -319,4 +321,10 @@ if __name__ == "__main__":
             elif key == ord('r'):
                 print('mode: rotaion anticlockwise')
                 inst['rgb_crop'] = np.flip(inst['rgb_crop'], axis=-1).swapaxes(-1, -2).copy()
+                break
+
+            elif key == ord('i'):
+                print('mode: input i')
+                data_i = int(input('input i'))
+                print(f"current data_i is {data_i}")
                 break

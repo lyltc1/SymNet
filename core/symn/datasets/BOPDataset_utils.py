@@ -45,12 +45,12 @@ def get_aux(cfg, gt, aug_bg=False, aug_rgb=False, aug_occ=False, detection=False
         if detection:
             crop_aux = RandomRotatedMaskCrop(cfg.DATASETS.RES_CROP, use_bbox_est=True, offset_scale=0.,
                                              crop_keys=('rgb', 'mask_visib'),
-                                             crop_scale=[1.3, 1.3],
+                                             crop_scale=cfg.DATASETS.TEST_CROP,
                                              crop_keys_crop_res_divide2=('mask', 'mask_visib', 'GT'),
                                              rgb_interpolation=cv2.INTER_LINEAR)
         else:
             crop_aux = RandomRotatedMaskCrop(cfg.DATASETS.RES_CROP, mask_key='mask_visib',
-                                             crop_scale=[1.2, 1.5],
+                                             crop_scale=cfg.DATASETS.TRAIN_CROP,
                                              crop_keys=('rgb', 'mask_visib'),
                                              crop_keys_crop_res_divide2=('mask', 'mask_visib', 'GT'),
                                              rgb_interpolation=cv2.INTER_LINEAR)
@@ -72,8 +72,9 @@ def get_aux(cfg, gt, aug_bg=False, aug_rgb=False, aug_occ=False, detection=False
                      LoadSymInfoExtentsAux(),
                      ])
     else:
-        auxs.extend([RandomRotatedMaskCrop(cfg.DATASETS.RES_CROP, use_bbox_est=True,
+        auxs.extend([RandomRotatedMaskCrop(cfg.DATASETS.RES_CROP, use_bbox_est=True, offset_scale=0.,
                                            crop_keys=('rgb',),
+                                           crop_scale=cfg.DATASETS.TEST_CROP,
                                            crop_keys_crop_res_divide2=tuple(),
                                            rgb_interpolation=cv2.INTER_LINEAR),
                      ])
@@ -149,6 +150,7 @@ def build_BOP_test_dataset(cfg, dataset_type, debug=False):
             # ---- build dataset ----
             test_dataset = BopTestDataset(meta_info, folder_name, obj_ids=obj_ids,
                                           auxs=auxs_test, detections=detections, keyframe=keyframe,
+                                          min_det_score=cfg.DATASETS.TEST_SCORE_THR
                                           )
             dataset.append(test_dataset)
         else:

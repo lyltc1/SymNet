@@ -68,8 +68,9 @@ DATASETS = dict(
     # TEST_DETECTION_TYPE="type1",  # choose from ["type1" for yolox, "type2" for maskrcnn, "type3"]
     # TEST_DETECTION_PATH='gdrnpp_yolox_detections/tless/test/test_bboxes/yolox_x_640_tless_real_pbr_tless_bop_test.json',
     # TEST_DETECTION_PATH=None,
-    TEST_SCORE_THR=0.5,
-    TEST_TOP_K_PER_OBJ=1,
+    TEST_SCORE_THR=0.01,  # used in test datasets
+    TRAIN_CROP=[1.2, 1.5],  # TRAIN_CROP is used when detections not available
+    TEST_CROP=[1.3, 1.3],  # TEST_CROP is used when detections avaliable
     RES_CROP=256,
     OBJ_IDS=None,  # OBJ_IDS=[15, 18],  # should be consistent with NUM_CLASSES
     NUM_CLASSES=None,  # NUM_CLASSES=2,  # should be consistent with OBJ_IDS

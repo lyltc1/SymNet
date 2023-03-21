@@ -174,6 +174,18 @@ def main():
     model.load_state_dict(torch.load(cfg.RESUME)['state_dict'])
     model.eval().to(device).freeze()
 
+    # TODO, temporary code to ensure code compatibility, should be deleted after
+    # cfg.DATASETS.TEST_SCORE_THR / TRAIN_CROP / TEST_CROP had been set in config
+    test_score_thr = cfg.DATASETS.get("TEST_SCORE_THR", 0.01)
+    cfg.DATASETS.TEST_SCORE_THR = test_score_thr
+    print(f"cfg.DATASETS.TEST_SCORE_THR is {cfg.DATASETS.TEST_SCORE_THR}")
+    train_crop = cfg.DATASETS.get("TRAIN_CROP", [1.2, 1.5])
+    cfg.DATASETS.TRAIN_CROP = train_crop
+    print(f"cfg.DATASETS.TRAIN_CROP is {cfg.DATASETS.TRAIN_CROP}")
+    test_crop = cfg.DATASETS.get("TEST_CROP", [1.3, 1.3])
+    cfg.DATASETS.TEST_CROP = test_crop
+    print(f"cfg.DATASETS.TEST_CROP is {cfg.DATASETS.TEST_CROP}")
+
     # load data
     data_test = build_BOP_test_dataset(cfg, cfg.DATASETS.TEST, debug=cfg.DEBUG)
     loader_test = torch.utils.data.DataLoader(data_test,
