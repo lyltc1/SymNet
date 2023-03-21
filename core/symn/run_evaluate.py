@@ -14,7 +14,6 @@ from tqdm import tqdm
 import numpy as np
 import torch
 from mmcv import Config
-
 from bop_toolkit_lib import inout
 
 from core.symn.MetaInfo import MetaInfo
@@ -24,29 +23,6 @@ from lib.utils.time_utils import get_time_str, add_timing_to_list
 from core.symn.utils.visualize_utils import visualize_v2
 from core.symn.utils.renderer import ObjCoordRenderer
 from core.symn.utils.obj import load_objs
-
-
-# function to calculate ycbv metric
-def compute_auc_posecnn(errors):
-    errors = errors.copy()
-    d = np.sort(errors)
-    d[d > 0.1] = np.inf
-    accuracy = np.cumsum(np.ones(d.shape[0])) / d.shape[0]
-    ids = np.isfinite(d)
-    d = d[ids]
-    accuracy = accuracy[ids]
-    if len(ids) == 0 or ids.sum() == 0:
-        return np.nan
-    rec = d
-    prec = accuracy
-    mrec = np.concatenate(([0], rec, [0.1]))
-    mpre = np.concatenate(([0], prec, [prec[-1]]))
-    for i in np.arange(1, len(mpre)):
-        mpre[i] = max(mpre[i], mpre[i - 1])
-    i = np.arange(1, len(mpre))
-    ids = np.where(mrec[1:] != mrec[:-1])[0] + 1
-    ap = ((mrec[ids] - mrec[ids - 1]) * mpre[ids]).sum() * 10
-    return ap
 
 
 def write_cvs(evaluation_result_path, file_name_prefix, predictions):
@@ -136,7 +112,7 @@ def main():
         for file in os.listdir(args.eval_folder):
             if os.path.splitext(file)[1] == '.ckpt' and os.path.splitext(file)[0].startswith("epoch"):
                 args.ckpt = os.path.join(args.eval_folder, file)
-    print(f"eval_ckpt: {args.ckpt}")
+    print(f"eval_ckpt: {args.ckpt}, make sure it is the desired behavior")
     cfg.RESUME = args.ckpt
     # parse --debug
     cfg.DEBUG = args.debug
@@ -178,13 +154,13 @@ def main():
     # cfg.DATASETS.TEST_SCORE_THR / TRAIN_CROP / TEST_CROP had been set in config
     test_score_thr = cfg.DATASETS.get("TEST_SCORE_THR", 0.01)
     cfg.DATASETS.TEST_SCORE_THR = test_score_thr
-    print(f"cfg.DATASETS.TEST_SCORE_THR is {cfg.DATASETS.TEST_SCORE_THR}")
+    print(f"cfg.DATASETS.TEST_SCORE_THR is {cfg.DATASETS.TEST_SCORE_THR}, make sure it is the desired behavior")
     train_crop = cfg.DATASETS.get("TRAIN_CROP", [1.2, 1.5])
     cfg.DATASETS.TRAIN_CROP = train_crop
-    print(f"cfg.DATASETS.TRAIN_CROP is {cfg.DATASETS.TRAIN_CROP}")
+    print(f"cfg.DATASETS.TRAIN_CROP is {cfg.DATASETS.TRAIN_CROP}, make sure it is the desired behavior")
     test_crop = cfg.DATASETS.get("TEST_CROP", [1.3, 1.3])
     cfg.DATASETS.TEST_CROP = test_crop
-    print(f"cfg.DATASETS.TEST_CROP is {cfg.DATASETS.TEST_CROP}")
+    print(f"cfg.DATASETS.TEST_CROP is {cfg.DATASETS.TEST_CROP}, make sure it is the desired behavior")
 
     # load data
     data_test = build_BOP_test_dataset(cfg, cfg.DATASETS.TEST, debug=cfg.DEBUG)
