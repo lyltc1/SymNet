@@ -85,7 +85,7 @@ def preprogress_pose(obj_id, renderer, K, R, t, rgb):
     rgb = preprogress_rgb(rgb)
     render = renderer.render(obj_id, K, R, t)
     render_mask = render[..., 3] == 1.
-    pose_img = rgb.copy()
+    pose_img = cv2.resize(rgb, (128, 128))
     pose_img[render_mask] = pose_img[render_mask] * 0.5 + render[..., :3][render_mask] * 0.25 * 255 + 0.25 * 255
     return pose_img
 

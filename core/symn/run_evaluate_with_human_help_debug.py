@@ -33,10 +33,12 @@ from core.symn.datasets.BOPDataset_utils import build_BOP_test_dataset, build_BO
 from core.symn.models.SymNetLightning import build_model
 from core.symn.utils.renderer import ObjCoordRenderer
 from core.symn.utils.obj import load_objs
-from core.symn.utils.visualize_utils import show_rgb, show_mask_contour, show_mask_code, show_pose,\
-                                            preprogress_mask, preprogress_rgb
+from core.symn.utils.visualize_utils import show_rgb, show_mask_contour, show_mask_code, show_pose, \
+    preprogress_mask, preprogress_rgb
 from core.symn.datasets.std_auxs import RandomRotatedMaskCrop, NormalizeAux
 from core.symn.datasets.symn_aux import GT2CodeAux
+
+from core.symn.utils.edge_refine import edge_refine
 
 
 def preprogress_Rt(R, t, K=None):
@@ -153,7 +155,7 @@ if __name__ == "__main__":
     cfg.DATASETS.SYM_OBJS_ID = sym_obj_id
 
     objs = load_objs(meta_info, obj_ids)
-    renderer = ObjCoordRenderer(objs, [k for k in objs.keys()], cfg.DATASETS.RES_CROP)
+    renderer = ObjCoordRenderer(objs, [k for k in objs.keys()], cfg.DATASETS.RES_CROP // 2)
 
     # load model
     model = build_model(cfg)
@@ -174,6 +176,7 @@ if __name__ == "__main__":
     print("press 'n' to input scene id and image id")
     data_i = 0
     current_data_i = -1
+    edge_refine_flag = False
     while True:
         print('------------ input -------------')
         # current_data_i != data_i, we need to generate new inst from dataset, else use old inst
@@ -189,7 +192,7 @@ if __name__ == "__main__":
             cv2.putText(rgb, 'bbox_est', (int(inst['bbox_est'][0]), int(inst['bbox_est'][1])),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255))
         cv2.rectangle(rgb, (int(inst['AABB_crop'][0]), int(inst['AABB_crop'][1])),
-                        (int(inst['AABB_crop'][2]), int(inst['AABB_crop'][3])), (255, 0, 0), 1)
+                      (int(inst['AABB_crop'][2]), int(inst['AABB_crop'][3])), (255, 0, 0), 1)
         cv2.putText(rgb, 'crop', (int(inst['AABB_crop'][0]), int(inst['AABB_crop'][1])),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0))
         cv2.imshow('rgb', rgb[..., ::-1])
@@ -216,14 +219,17 @@ if __name__ == "__main__":
         cv2.namedWindow('gt est visib mask contour', cv2.WINDOW_NORMAL)
         show_mask_contour('gt est visib mask contour', rgb_crop, [mask_visib_crop, visib_mask_prob])
 
-        K = inst['K_crop']
+        K = inst['K_crop_d2']
         gt_R = inst['cam_R_obj']
         gt_t = inst['cam_t_obj']
         est_R = out_dict['rot'][0]
         est_t = out_dict['trans'][0]
         gt_R, gt_t, K = preprogress_Rt(gt_R, gt_t, K)
         est_R, est_t = preprogress_Rt(est_R, est_t)
+
+        cv2.namedWindow("gt pose", cv2.WINDOW_NORMAL)
         show_pose("gt pose", K, gt_R, gt_t, rgb_crop, renderer, obj_id)
+        cv2.namedWindow("est pose", cv2.WINDOW_NORMAL)
         show_pose("est pose", K, est_R, est_t, rgb_crop, renderer, obj_id)
 
         # caculate error
@@ -239,6 +245,29 @@ if __name__ == "__main__":
         else:
             error_add = pose_error.add(est_R, est_t, gt_R, gt_t, models_3d[obj_id]["pts"])
             print(f"add: {error_add}, threshold:[{d * 0.02},{d * 0.05},{d * 0.1}]")
+
+        if edge_refine_flag:
+            refine_R, refine_t, success = edge_refine(est_R, est_t, K, obj_id,
+                                                      amodal_mask_prob, visib_mask_prob, renderer,
+                                                      vis_dir='/home/lyltc/cache')
+            if success is False:
+                print("fail to do edge refine")
+            cv2.namedWindow("refine pose", cv2.WINDOW_NORMAL)
+            show_pose("refine pose", K, refine_R, refine_t, rgb_crop, renderer, obj_id)
+            # caculate error
+            error_mssd = pose_error.mssd(refine_R, refine_t, gt_R, gt_t, models_3d[obj_id]["pts"], models_sym[obj_id])
+            error_mspd = pose_error.mspd(refine_R, refine_t, gt_R, gt_t, K, models_3d[obj_id]["pts"],
+                                         models_sym[obj_id])
+            error_add = pose_error.add(refine_R, refine_t, gt_R, gt_t, models_3d[obj_id]["pts"])
+            d = diameters[obj_id]
+            print(f"refine: mssd: {error_mssd}, threshold: [{d * 0.05},{d * 0.1},...,{d * 0.5}]")
+            print(f"refine: mspd: {error_mspd}, threshold: [5, 10, ..., 45, 50]")
+            if obj_id in sym_obj_id:
+                error_adi = pose_error.adi(refine_R, refine_t, gt_R, gt_t, models_3d[obj_id]["pts"])
+                print(f"refine: adi: {error_adi}, threshold:[{d * 0.02},{d * 0.05},{d * 0.1}]")
+            else:
+                error_add = pose_error.add(refine_R, refine_t, gt_R, gt_t, models_3d[obj_id]["pts"])
+                print(f"refine: add: {error_add}, threshold:[{d * 0.02},{d * 0.05},{d * 0.1}]")
 
         while True:
             print()
@@ -275,12 +304,12 @@ if __name__ == "__main__":
                 print('mode:crop and padding with zero on rgb_crop')
                 Ms = np.concatenate((inst['M_crop'], [[0, 0, 1]]))
                 bbox_est = inst['bbox_est']
-                bbox_est = np.array(((bbox_est[0], bbox_est[1], 1),(bbox_est[2], bbox_est[3], 1)))
+                bbox_est = np.array(((bbox_est[0], bbox_est[1], 1), (bbox_est[2], bbox_est[3], 1)))
                 bbox_est_in_crop = Ms @ bbox_est.T
                 left, top, right, down = int(bbox_est_in_crop[0, 0]), int(bbox_est_in_crop[1, 0]), \
                                          int(bbox_est_in_crop[0, 1]), int(bbox_est_in_crop[1, 1])
                 tmp_mask = np.zeros_like(inst['rgb_crop'])
-                tmp_mask[:, top:down+1, left:right+1] = 1
+                tmp_mask[:, top:down + 1, left:right + 1] = 1
                 inst['rgb_crop'] *= tmp_mask
                 break
 
@@ -328,3 +357,9 @@ if __name__ == "__main__":
                 data_i = int(input('input i'))
                 print(f"current data_i is {data_i}")
                 break
+            elif key == ord('e'):
+                edge_refine_flag = ~edge_refine_flag
+                print(f'edge refine flag is {edge_refine_flag}')
+                break
+                print("the blue line is visible contour")
+                print("the red line is render contour")

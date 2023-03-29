@@ -227,6 +227,6 @@ def batch_data_test(data):
                      "mask_visib_crop", "mask_crop", "code_crop", "extent",
                      "cam_R_obj", "cam_t_obj", "allo_rot6d", "allo_rot", "SITE",
                      "points", "sym_info", 'det_score', 'det_time', 'M_crop',
-                     "bbox_est"]:
+                     "bbox_est", "K_crop_d2"]:
             batch[key] = [d[key] for d in data]
     return batch

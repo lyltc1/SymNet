@@ -86,11 +86,10 @@ class RandomRotatedMaskCropDefinition(BopDatasetAux):
         r = self.p.crop_res
         M = np.concatenate((R, [[-cx], [-cy]]), axis=1) * size
         M[:, 2] += r / 2
-
         offset = (r - r / self.p.crop_scale) / 2 * self.p.offset_scale
+
         M[:, 2] += np.random.uniform(-offset, offset, 2)
         Ms = np.concatenate((M, [[0, 0, 1]]))
-
         # calculate axis aligned bounding box in the original image of the rotated crop
         crop_corners = np.array(((0, 0, 1), (0, r, 1), (r, 0, 1), (r, r, 1))) - (0.5, 0.5, 0)  # (4, 3)
         crop_corners = np.linalg.inv(Ms) @ crop_corners.T  # (3, 4)
@@ -102,7 +101,11 @@ class RandomRotatedMaskCropDefinition(BopDatasetAux):
 
         inst['AABB_crop'] = np.array([left, top, right, bottom])
         inst['M_crop'] = M
+        M_d2 = M * 0.5
+        inst['M_crop_d2'] = M_d2
         inst['K_crop'] = Ms @ inst['K']
+        Ms_d2 = np.concatenate((M_d2, [[0, 0, 1]]))
+        inst['K_crop_d2'] = Ms_d2 @ inst['K']
         return inst
 
 
@@ -127,7 +130,7 @@ class CropApplyResDevide2(BopDatasetAux):
         for crop_key in self.p.crop_keys_crop_res_divide2:
             im = inst[crop_key]
             interp = cv2.INTER_NEAREST if crop_key in ['GT',] else cv2.INTER_LINEAR
-            inst[f'{crop_key}_crop'] = cv2.warpAffine(im, inst['M_crop'] * 0.5, (r//2, r//2), flags=interp)
+            inst[f'{crop_key}_crop'] = cv2.warpAffine(im, inst['M_crop_d2'], (r//2, r//2), flags=interp)
         return inst
 
 
