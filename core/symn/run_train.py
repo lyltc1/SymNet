@@ -22,7 +22,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks.progress import TQDMProgressBar
 from pytorch_lightning.loggers import TensorBoardLogger
 from lib.utils.time_utils import get_time_str
-from core.symn.datasets.BOPDataset_utils import build_BOP_train_dataset, batch_data_train
+from core.symn.datasets.BOPDataset_utils import build_BOP_train_dataset, build_BOP_test_dataset, batch_data_train
 from core.symn.models.SymNetLightning import build_model
 from core.symn.MetaInfo import MetaInfo
 
@@ -83,7 +83,6 @@ def main():
 
     # datasets
     data_train = build_BOP_train_dataset(cfg, cfg.DATASETS.TRAIN, args.debug)
-    data_valid = build_BOP_train_dataset(cfg, cfg.DATASETS.TEST, args.debug)
     if args.small_dataset:
         data_train, _ = torch.utils.data.random_split(
             data_train, (4, len(data_train) - 4),
@@ -93,6 +92,7 @@ def main():
             data_valid, (4, len(data_valid) - 4),
             generator=torch.Generator().manual_seed(0),
         )
+    data_valid = build_BOP_test_dataset(cfg, cfg.DATASETS.TEST, args.debug, gt=True)
     loader_args = dict(
         batch_size=cfg.TRAIN.BATCH_SIZE,
         num_workers=cfg.TRAIN.NUM_WORKERS,
@@ -102,7 +102,6 @@ def main():
     )
     loader_train = torch.utils.data.DataLoader(data_train, drop_last=True, shuffle=True, **loader_args)
     loader_valid = torch.utils.data.DataLoader(data_valid, shuffle=False, **loader_args)
-
     # set output_dir
     if cfg.OUTPUT_DIR.lower() == "auto":
         out_str = cfg.MODEL.NAME + "_" + cfg.DATASETS.NAME
@@ -129,19 +128,21 @@ def main():
         accelerator="gpu",
         strategy=strategy,
         devices=args.gpus,
+        max_epochs = 400,  # in the first 70 epochs, do not use validation
         callbacks=[
             pl.callbacks.LearningRateMonitor(logging_interval="step"),
-            pl.callbacks.ModelCheckpoint(dirpath=cfg.OUTPUT_DIR, save_top_k=1,
-                                         save_last=True, monitor='valid/eval_loss'),
+            pl.callbacks.ModelCheckpoint(dirpath=cfg.OUTPUT_DIR, save_top_k=1, mode="max",
+                                         save_last=True, monitor='valid/adx_10'),
             TQDMProgressBar(refresh_rate=20),
         ],
         logger=[
             TensorBoardLogger(save_dir=cfg.OUTPUT_DIR),
         ],
-        val_check_interval=0.5,
+        val_check_interval=1.0,
     )
     trainer.fit(model, loader_train, loader_valid, ckpt_path=cfg.RESUME)
 
+    # trainer.validate(model, loader_valid, ckpt_path=cfg.RESUME)
 
 if __name__ == '__main__':
     main()

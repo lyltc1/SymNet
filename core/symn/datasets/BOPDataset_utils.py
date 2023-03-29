@@ -120,7 +120,7 @@ def build_BOP_train_dataset(cfg, dataset_type, debug=False):
     return dataset
 
 
-def build_BOP_test_dataset(cfg, dataset_type, debug=False):
+def build_BOP_test_dataset(cfg, dataset_type, debug=False, gt=False):
     """ build dataset in cfg.DATASETS.TEST """
     meta_info = MetaInfo(cfg.DATASETS.NAME)
     obj_ids = cfg.DATASETS.OBJ_IDS
@@ -134,7 +134,7 @@ def build_BOP_test_dataset(cfg, dataset_type, debug=False):
     for folder_name in dataset_type:
         if folder_name == "test" or "test_primesense":
             use_detection = True if cfg.DATASETS.TEST_DETECTION_PATH else False
-            auxs_test = get_aux(cfg, gt=True, detection=use_detection, aug_bg=False, aug_rgb=False, debug=debug)
+            auxs_test = get_aux(cfg, gt=gt, detection=use_detection, aug_bg=False, aug_rgb=False, debug=debug)
             # ---- get detections ----
             detections = None
             if use_detection:

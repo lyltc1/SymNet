@@ -47,6 +47,7 @@ class MetaInfo:
         self.obj_ids = model_params['obj_ids']
         self.symmetric_obj_ids = model_params['symmetric_obj_ids']
         self.model_tpath = model_params['model_tpath']
+        self.model_eval_tpath = get_model_params(bop_folder, name, 'eval')['model_tpath']
         self.models_info_path = model_params['models_info_path']
         # method related folder
         self.detections_folder = detections_folder
