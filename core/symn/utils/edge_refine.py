@@ -119,13 +119,16 @@ def edge_refine(R: np.ndarray, t: np.ndarray, K, obj_id,
         else:
             break
         #  Optimize and update pose
-        theta = np.linalg.solve(H, b)
+        try:
+            theta = np.linalg.solve(H, b)
+        except:
+            return R, t, False
         dR, _ = cv2.Rodrigues(theta[0:3])
         dt = theta[3:6]
-        if debug:
-            print(f"theta, {theta}")
-            print(f"dR, {dR}")
-            print(f"dt, {dt}")
+        # if debug:
+        #     print(f"theta, {theta}")
+        #     print(f"dR, {dR}")
+        #     print(f"dt, {dt}")
         R = np.matmul(dR, R)
         t = np.matmul(dR, t) + dt
 
@@ -250,7 +253,10 @@ def edge_refine_v2(R: np.ndarray, t: np.ndarray, K, obj_id,
         else:
             break
         #  Optimize and update pose
-        theta = np.linalg.solve(H, b)
+        try:
+            theta = np.linalg.solve(H, b)
+        except:
+            return R, t, False
         print(f"theta, {theta}")
         dR, _ = cv2.Rodrigues(theta[0:3])
         dt = theta[3:6]

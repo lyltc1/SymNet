@@ -56,13 +56,18 @@ SOLVER = dict(
 )
 
 DATASETS = dict(
-    NAME="lmo",
-    TRAIN=("train_real", "train_pbr"),  # tuple, which is the subset of ("pbr", "real",)
-    TEST=("test",),
+    NAME="tless",
+    TRAIN=("train_pbr",),  # tuple, which is the subset of ("pbr", "real",)
+    TEST=("test_primesense",),
     TEST_KEYFRAME="test_targets_bop19.json",  # choose from [None, "test_targets_bop19.json",
                                               #              "ycbv_test_targets_keyframe.json"]
     TEST_DETECTION_TYPE="type1",  # choose from ["type1" for yolox, "type2" for maskrcnn, "type3"]
-    TEST_DETECTION_PATH='zebrapose_detections/lmo/fcos_V57eSE_MSx1333_ColorAugAAEWeaker_8e_lmo_pbr.json',
+    TEST_DETECTION_PATH='zebrapose_detections/tless/fcos_V57eSE_MSx1333_ColorAugAAEWeaker_8e_tless_real_pbr.json',
+    # TEST_DETECTION_TYPE="type2",  # choose from ["type1" for yolox, "type2" for maskrcnn, "type3"]
+    # TEST_DETECTION_PATH='cosypose_maskrcnn_synt+real/challenge2022-642947_tless-test.json',
+    # TEST_DETECTION_TYPE="type1",  # choose from ["type1" for yolox, "type2" for maskrcnn, "type3"]
+    # TEST_DETECTION_PATH='gdrnpp_yolox_detections/tless/test/test_bboxes/yolox_x_640_tless_real_pbr_tless_bop_test.json',
+    # TEST_DETECTION_PATH=None,
     TEST_SCORE_THR=0.01,  # used in test datasets
     TRAIN_CROP=[1.2, 1.5],  # TRAIN_CROP is used when detections not available
     TEST_CROP=[1.3, 1.3],  # TEST_CROP is used when detections avaliable
@@ -70,7 +75,7 @@ DATASETS = dict(
     OBJ_IDS=None,  # OBJ_IDS=[15, 18],  # should be consistent with NUM_CLASSES
     NUM_CLASSES=None,  # NUM_CLASSES=2,  # should be consistent with OBJ_IDS
     COLOR_AUG_PROB=0.8,
-    OCCLUDE_AUG_PROB=0.0,
+    OCCLUDE_AUG_PROB=0.5,
     BG_AUG_PROB=0.5,
     BG_AUG_TYPE="VOC",  # choose from ["VOC", "VOC_table"]
     SYM_OBJS_ID="bop",  # choose from ["bop", or [13, 16, 19, 20, 21]

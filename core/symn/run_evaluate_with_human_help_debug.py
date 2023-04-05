@@ -195,7 +195,7 @@ if __name__ == "__main__":
                       (int(inst['AABB_crop'][2]), int(inst['AABB_crop'][3])), (255, 0, 0), 1)
         cv2.putText(rgb, 'crop', (int(inst['AABB_crop'][0]), int(inst['AABB_crop'][1])),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0))
-        cv2.imshow('rgb', rgb[..., ::-1])
+        show_rgb('rgb', rgb)
         rgb_crop = np.copy(inst['rgb_crop'])
         show_rgb('rgb_crop', rgb_crop)
         out_dict = model.infer(
@@ -214,8 +214,16 @@ if __name__ == "__main__":
 
         code_prob = out_dict["binary_code_prob"]
         show_mask_code('est visib amodal code', visib_mask_prob, amodal_mask_prob, code_prob)
+        # gt est mask contour
         cv2.namedWindow('gt est mask contour', cv2.WINDOW_NORMAL)
         show_mask_contour('gt est mask contour', rgb_crop, [mask_crop, amodal_mask_prob])
+        def cb_gt_est_mask_contour(event, x, y, flag, params):
+            if event == cv2.EVENT_LBUTTONDOWN:
+                show_rgb('gt est mask contour', rgb_crop)
+            elif event == cv2.EVENT_LBUTTONUP:
+                show_mask_contour('gt est mask contour', rgb_crop, [mask_crop, amodal_mask_prob])
+        cv2.setMouseCallback('gt est mask contour', cb_gt_est_mask_contour)
+        # gt est visib mask contour
         cv2.namedWindow('gt est visib mask contour', cv2.WINDOW_NORMAL)
         show_mask_contour('gt est visib mask contour', rgb_crop, [mask_visib_crop, visib_mask_prob])
 
@@ -249,7 +257,7 @@ if __name__ == "__main__":
         if edge_refine_flag:
             refine_R, refine_t, success = edge_refine(est_R, est_t, K, obj_id,
                                                       amodal_mask_prob, visib_mask_prob, renderer,
-                                                      vis_dir='/home/lyltc/cache')
+                                                      vis_dir='/home/lyltc/cache', debug=True)
             if success is False:
                 print("fail to do edge refine")
             cv2.namedWindow("refine pose", cv2.WINDOW_NORMAL)

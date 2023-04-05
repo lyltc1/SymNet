@@ -15,5 +15,5 @@ eval_folders = ['SymNet_tless_obj22_20230314_154657',
 
 for eval_folder in eval_folders:
     os.system(
-        "python core/symn/run_evaluate.py --eval_folder output/" +
-        eval_folder + " --debug --use_last_ckpt")
+        "python core/symn/run_evaluate_with_edge_refine.py --eval_folder output/" +
+        eval_folder + " --debug")

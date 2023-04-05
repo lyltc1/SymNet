@@ -39,7 +39,7 @@ def show_mask(windows_name: str, mask: Union[np.ndarray, torch.Tensor]):
     cv2.imshow(windows_name, preprogress_mask(mask))
 
 def show_mask_contour(windows_name: str, rgb, mask_list, threshold=128):
-    color = ((0, 255, 0), (0, 0, 255),)
+    color = ((0, 255, 0), (0, 0, 255),)  # used in mouse_cb_not_show_contour
     rgb = preprogress_rgb(rgb)
     rgb = cv2.resize(rgb, (rgb.shape[0] >> 1, rgb.shape[1] >> 1), interpolation=cv2.INTER_LINEAR)
     for m, c in zip(mask_list, color):
