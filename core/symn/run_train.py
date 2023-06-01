@@ -1,7 +1,6 @@
 """ usage:
     python core/symn/run_train.py --config-file configs/symn/tless/symn_tless_config.py --obj_id 4
     python core/symn/run_train.py --config-file configs/symn/tless/symn_tless_config.py --obj_id 4 --debug True
-    If you have jsut one gpu, use --debug True
 """
 
 import os

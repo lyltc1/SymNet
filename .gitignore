@@ -44,6 +44,4 @@ dist/
 
 # project dirs
 /models
-
-# third party
-/bop_toolkit
+/pretrained_backbone
