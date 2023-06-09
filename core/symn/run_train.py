@@ -127,7 +127,7 @@ def main():
     trainer = pl.Trainer(
         accelerator="gpu",
         strategy=strategy,
-        max_epochs=200,  # TODO
+        max_epochs=200,
         devices=args.gpus,
         callbacks=[
             pl.callbacks.LearningRateMonitor(logging_interval="step"),
