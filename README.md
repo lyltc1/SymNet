@@ -34,6 +34,8 @@ recommend using soft links (ln -sf)
 
 * Please also download the `binary_code` and `models_GT_color` and `detections`from here.
 
+* Download the `detections` from here.
+
 * Download the [pretrained resnet34 backbone](https://cloud.dfki.de/owncloud/index.php/s/zT7z7c3e666mJTW), save them under `./pretrained_backbone`.
 
 The structure of this project should look like below:
@@ -120,6 +122,11 @@ lyltc1/env:cuda116-torch112-detectron2-bop-0.0.6 \
 ```
 Note:The docker doesn't contain the code of Symnet, I use -v, you can also use git clone to download the code to docker:/home/Symnet.
 
+If you have container stopped, run
+```
+docker exec -it CONTAINER_ID /bin/bash
+```
+
 Inside the container, check the volumes.
 ```
 root@f6093b96bdc3:/home# ls /home
@@ -144,4 +151,11 @@ ln -s /home/dataset/VOCdevkit/ /home/Symnet/datasets/.
 ln -s /home/dataset/pretrained_backbone/ /home/Symnet/
 mkdir pretrained_backbone
 ln -s /home/dataset/pretrained_backbone/resnet/resnet34-333f7ec4.pth /home/Symnet/pretrained_backbone/
+```
+
+### 4. modify ```MetaInfo.py```
+all path of datasets is defined in core/symn/MetaInfo.py, check it or change it.
+```
+# untrack the file if modified locally
+git update-index --assume-unchanged "core/symn/MetaInfo.py"
 ```

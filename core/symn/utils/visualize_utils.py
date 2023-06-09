@@ -134,6 +134,7 @@ def visualize_v2(inputs, out_dir, out_dict=None, renderer=None, sub_file=None):
         amodal_mask_prob = preprogress_mask(out_dict["amodal_mask_prob"][0, 0])
         binary_code_prob = preprogress_code(out_dict["binary_code_prob"][0])
         concat_img_channel1_eval = np.column_stack([amodal_mask_prob, visib_mask_prob, binary_code_prob])
+        concat_img_channel1 = concat_img_channel1[:, :concat_img_channel1_eval.shape[1]]
         concat_img_channel1_diff = np.abs(concat_img_channel1-concat_img_channel1_eval)
         concat_img_channel1 = np.row_stack([concat_img_channel1,
                                             concat_img_channel1_eval,

@@ -41,7 +41,7 @@ def main():
     parser.add_argument("--debug", type=bool, default=False, help="use one gpu and small batch size")
     parser.add_argument('--gpus', type=int, nargs='+', default=[0])
     parser.add_argument("--obj_id", type=int, nargs='+', default=[], required=True, help="the obj id to train")
-    parser.add_argument('--small_dataset', action="store_true")
+    parser.add_argument('--small_dataset', action="store_true", help="quick debug with small datasets")
     args = parser.parse_args()
     # parse --config-file
     cfg = Config.fromfile(args.config_file)
@@ -85,11 +85,11 @@ def main():
     data_valid = build_BOP_train_dataset(cfg, cfg.DATASETS.TEST, args.debug)
     if args.small_dataset:
         data_train, _ = torch.utils.data.random_split(
-            data_train, (4, len(data_train) - 4),
+            data_train, (128, len(data_train) - 128),
             generator=torch.Generator().manual_seed(0),
         )
         data_valid, _ = torch.utils.data.random_split(
-            data_valid, (4, len(data_valid) - 4),
+            data_valid, (128, len(data_valid) - 128),
             generator=torch.Generator().manual_seed(0),
         )
     loader_args = dict(
@@ -127,17 +127,21 @@ def main():
     trainer = pl.Trainer(
         accelerator="gpu",
         strategy=strategy,
+        max_epochs=200,  # TODO
         devices=args.gpus,
         callbacks=[
             pl.callbacks.LearningRateMonitor(logging_interval="step"),
-            pl.callbacks.ModelCheckpoint(dirpath=cfg.OUTPUT_DIR, save_top_k=1,
-                                         save_last=True, monitor='valid/eval_loss'),
+            # if want to save top k, set save_top_k = 1, and every_n_epochs = 1, save_last=True;
+            # if want to save every n epoch, set save_top_k=-1, and every_n_epochs.
+            pl.callbacks.ModelCheckpoint(dirpath=cfg.OUTPUT_DIR, save_top_k=-1,
+                                         save_last=False, monitor='valid/eval_loss', 
+                                         every_n_epochs=20),
             TQDMProgressBar(refresh_rate=20),
         ],
         logger=[
             TensorBoardLogger(save_dir=cfg.OUTPUT_DIR),
         ],
-        val_check_interval=0.5,
+        val_check_interval=1.0,
     )
     trainer.fit(model, loader_train, loader_valid, ckpt_path=cfg.RESUME)
 

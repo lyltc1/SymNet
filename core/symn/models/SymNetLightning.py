@@ -66,6 +66,9 @@ class SymNet(pl.LightningModule):
             sym_infos list( b of enum(ndarray[n_sym, 3, 3], None))
         """
         cfg = self.cfg
+        geometry_net_cfg = self.cfg.MODEL.GEOMETRY_NET
+        if gt_binary_code is not None:
+            gt_binary_code = gt_binary_code[:, :geometry_net_cfg.CODE_BIT, :, :]
         if self.concat:
             if "aspp" in self.geometry_net_name:
                 x_f32, x_f64, x_f128 = self.backbone(x)
@@ -90,7 +93,7 @@ class SymNet(pl.LightningModule):
             visib_mask = visib_mask[torch.arange(bs).to(device), obj_idx]
             amodal_mask = amodal_mask.view(bs, self.num_classes, 1, res, res)
             amodal_mask = amodal_mask[torch.arange(bs).to(device), obj_idx]
-            binary_code = binary_code.view(bs, self.num_classes, 16, res, res)
+            binary_code = binary_code.view(bs, self.num_classes, geometry_net_cfg.CODE_BIT, res, res)
             binary_code = binary_code[torch.arange(bs).to(device), obj_idx]
 
         if self.end_to_end:
@@ -152,7 +155,7 @@ class SymNet(pl.LightningModule):
             if code_loss_type == "BCE":
                 loss_func = nn.BCEWithLogitsLoss(reduction="mean")
                 binary_code = binary_code.reshape(-1, binary_code.shape[2], binary_code.shape[3])
-                gt_binary_code = gt_binary_code.view(-1, gt_binary_code.shape[2], gt_binary_code.shape[3])
+                gt_binary_code = gt_binary_code.reshape(-1, gt_binary_code.shape[2], gt_binary_code.shape[3])
             elif code_loss_type == "L1":
                 loss_func = nn.L1Loss(reduction="mean")
                 binary_code = binary_code.reshape(-1, 1, binary_code.shape[2], binary_code.shape[3])
@@ -377,18 +380,18 @@ def build_model(cfg):
     # ---- build geometry net ----
     # input: [bsz, 512, 8, 8], [bsz, 256, 16, 16], [bsz, 128, 32, 32], [bsz, 64, 64, 64] for geo_net_cdpn
     #        [bsz, 512, 32, 32], [bsz, 64, 64, 64], [bsz, 64, 128, 128] for geo_net_aspp
-    # output: visib_mask[bsz, n_class, 128, 128], binary_code[bsz, n_class * 16, 128, 128]
+    # output: visib_mask[bsz, n_class, 128, 128], binary_code[bsz, n_class * bit, 128, 128]
     if "aspp" in geometry_net_cfg.ARCH:
-        geometry_net = ASPPGeoNet(cfg, channels[-1], num_classes=cfg.DATASETS.NUM_CLASSES)
+        geometry_net = ASPPGeoNet(cfg, channels[-1], num_classes=cfg.DATASETS.NUM_CLASSES, bit = geometry_net_cfg.CODE_BIT)
     elif "cdpn" in geometry_net_cfg.ARCH:
-        geometry_net = CDPNGeoNet(cfg, channels[-1], num_classes=cfg.DATASETS.NUM_CLASSES)
+        geometry_net = CDPNGeoNet(cfg, channels[-1], num_classes=cfg.DATASETS.NUM_CLASSES, bit = geometry_net_cfg.CODE_BIT)
     else:
         raise NotImplementedError
     # ---- build pnp net ----
-    # input: visib_mask[bsz, n_class, 128, 128], binary_code[bsz, n_class * 16, 128, 128]
+    # input: visib_mask[bsz, n_class, 128, 128], binary_code[bsz, n_class * bit, 128, 128]
     # output:
     if "ConvPnPNet" in pnp_net_cfg.ARCH:
-        inChannels = 1 + 1 + 16
+        inChannels = 1 + 1 + geometry_net_cfg.CODE_BIT
         rot_dim = 6
         pnp_net = ConvPnPNet(inChannels, rot_dim)
     else:

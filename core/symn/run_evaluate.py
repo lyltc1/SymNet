@@ -88,8 +88,8 @@ def write_cvs(evaluation_result_path, file_name_prefix, predictions):
                 f.write(",")
                 # time
                 f.write(f"{str(time)}\n")
-        os.system("python /home/lyltc/git/GDR-Net/bop_toolkit/scripts/eval_bop19_pose.py " + f"--result_filenames {os.path.abspath(filename)} " + f"--results_path {os.path.abspath(evaluation_result_path)} " +f"--eval_path {os.path.abspath(evaluation_result_path)}")
-        os.system("python /home/lyltc/git/GDR-Net/bop_toolkit/scripts/vis_est_poses.py " + f"--result_filenames {os.path.abspath(filename)} " + f"--output_path {os.path.abspath(evaluation_result_path)}")
+        os.system("python bop_toolkit/scripts/eval_bop19_pose.py " + f"--result_filenames {os.path.abspath(filename)} " + f"--results_path {os.path.abspath(evaluation_result_path)} " +f"--eval_path {os.path.abspath(evaluation_result_path)}")
+        # os.system("python bop_toolkit/scripts/vis_est_poses.py " + f"--result_filenames {os.path.abspath(filename)} " + f"--output_path {os.path.abspath(evaluation_result_path)}")
 
 def main():
     parser = argparse.ArgumentParser()
@@ -165,6 +165,9 @@ def main():
     test_crop = cfg.DATASETS.get("TEST_CROP", [1.3, 1.3])
     cfg.DATASETS.TEST_CROP = test_crop
     print(f"cfg.DATASETS.TEST_CROP is {cfg.DATASETS.TEST_CROP}, make sure it is the desired behavior")
+    code_bit = cfg.MODEL.GEOMETRY_NET.get("CODE_BIT", 16)
+    cfg.MODEL.GEOMETRY_NET.CODE_BIT = code_bit
+    print(f"cfg.MODEL.GEOMETRY_NET.CODE_BIT is {cfg.MODEL.GEOMETRY_NET.CODE_BIT}, make sure it is the desired behavior")
 
     # load data
     data_test = build_BOP_test_dataset(cfg, cfg.DATASETS.TEST, debug=cfg.DEBUG)

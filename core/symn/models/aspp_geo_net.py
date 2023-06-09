@@ -27,7 +27,7 @@ def upsample(in_channels, num_filters, kernel_size, padding, output_padding):
 
 
 class ASPPGeoNet(nn.Module):
-    def __init__(self, cfg, in_channels=128, num_classes=1):
+    def __init__(self, cfg, in_channels=128, num_classes=1, bit=16):
         super().__init__()
         self.concat = cfg.MODEL.BACKBONE.CONCAT
         num_filters = 256
@@ -59,7 +59,7 @@ class ASPPGeoNet(nn.Module):
 
         self.visib_mask_output_dim = 1 * num_classes
         self.amodal_mask_output_dim = 1 * num_classes
-        self.binary_code_output_dim = 16 * num_classes
+        self.binary_code_output_dim = bit * num_classes
         if self.concat:
             self.conv_1x1_4 = nn.Conv2d(num_filters + 64, self.visib_mask_output_dim + self.amodal_mask_output_dim
                                         + self.binary_code_output_dim, kernel_size=1, padding=0)

@@ -7,7 +7,7 @@ from mmcv.cnn import normal_init, constant_init
 
 
 class CDPNGeoNet(nn.Module):
-    def __init__(self, cfg, in_channels, num_classes=1):
+    def __init__(self, cfg, in_channels, num_classes=1, bit=16):
         super().__init__()
         self.concat = cfg.MODEL.BACKBONE.CONCAT
         num_filters = 256
@@ -38,7 +38,7 @@ class CDPNGeoNet(nn.Module):
 
         self.visib_mask_output_dim = 1 * num_classes
         self.amodal_mask_output_dim = 1 * num_classes
-        self.binary_code_output_dim = 16 * num_classes
+        self.binary_code_output_dim = bit * num_classes
 
         self.features.append(
             nn.Conv2d(
