@@ -10,12 +10,12 @@ sys.path.insert(0, os.path.join(cur_dir, "../"))  # add project directory to sys
 eval_folders = []
 count = 0
 
-for name in os.listdir('/home/lyltc/git/SymNet/output'):
-    if 'obj2_20230417' in name:
-        eval_folders.append(name)
+for name in os.listdir('/home/Symnet/output/tless_new_trained_models'):
+    eval_folders.append(name)
 print(eval_folders)
 input("press enter to continue")
 for eval_folder in eval_folders:
     os.system(
-        "python core/symn/run_evaluate.py --eval_folder output/" +
-        eval_folder + " --debug")
+        "python core/symn/run_evaluate.py --eval_folder output/tless_new_trained_models/" +
+        eval_folder)
+    

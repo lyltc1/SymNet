@@ -85,9 +85,7 @@ python core/symn/run_train.py --config-file configs/symn/tless/symn_tless_config
 
 Example:
 ```
-python core/symn/run_evaluate.py \
---eval_folder output/SymNet_tless_obj4_20221225_171440 \
---debug
+python core/symn/run_evaluate.py --eval_folder output/SymNet_tless_obj4_20221225_171440 --debug
 ```
 ## Docker
 
@@ -105,20 +103,7 @@ docker build -t lyltc1/env:cuda116-torch112-detectron2-bop-0.0.6 .
 ### 2.run docker
 In local mechine, prepare a folder ```dataset``` which contains all the data needed, include ```pbr``` which contains datasets like ```tless```,```ycbv``` from BOP, ```pretrained_backone```, ```binary_code```, ```VOCdevkit```. These folders need to be set soft links inside docker.
 ```
-docker run -it --runtime=nvidia \
--e NVIDIA_DRIVER_CAPABILITIES=all \
---gpus all \
---shm-size 12G \
---device=/dev/dri \
---group-add video \
---volume=/tmp/.X11-unix:/tmp/.X11-unix \
---env="DISPLAY=$DISPLAY" \
---env="QT_X11_NO_MITSHM=1" \
---name symnet \
--v /home/lyl/dataset/:/home/dataset:ro \
--v /home/lyl/git/SymNet/:/home/Symnet:rw \
-lyltc1/env:cuda116-torch112-detectron2-bop-0.0.6 \
-/bin/bash
+docker run -it --runtime=nvidia -e NVIDIA_DRIVER_CAPABILITIES=all --gpus all -p 8025:22 --shm-size 12G --device=/dev/dri --group-add video --volume=/tmp/.X11-unix:/tmp/.X11-unix --env="DISPLAY=$DISPLAY" --env="QT_X11_NO_MITSHM=1" --name symnet1 -v /home/lyl/dataset/:/home/dataset:ro -v /home/lyl/git/SymNet/:/home/Symnet:rw symnet:1.0.0 /bin/bash
 ```
 Note:The docker doesn't contain the code of Symnet, I use -v, you can also use git clone to download the code to docker:/home/Symnet.
 
@@ -144,6 +129,7 @@ mkdir output
 mkdir /home/Symnet/datasets
 mkdir /home/Symnet/datasets/BOP_DATASETS
 ln -s /home/dataset/pbr/ycbv/ /home/Symnet/datasets/BOP_DATASETS/
+ln -s /home/dataset/pbr/tless/ /home/Symnet/datasets/BOP_DATASETS/
 ln -s /home/dataset/symnet/binary_code/ /home/Symnet/datasets/.
 ln -s /home/dataset/symnet/models_GT_color/ /home/Symnet/datasets/.
 ln -s /home/dataset/symnet/detections/ /home/Symnet/datasets/.

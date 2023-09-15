@@ -1,4 +1,4 @@
-""" usage: python run_datasets.py --config-file configs/symn/tless/symn_tless_config.py --obj_id 1
+""" usage: python run_datasets.py --config-file configs/symn/itodd/symn_itodd_config.py --obj_id 1
     :param train: True for train dataset, False for test dataset
     :param debug: True for not using KeyFilterOutAux
     :param no_detection: used when train==False, if True, no detection result used
@@ -16,7 +16,7 @@ from core.symn.datasets.BOPDataset_utils import build_BOP_train_dataset, build_B
 from core.symn.datasets.std_auxs import denormalize
 
 parser = my_default_argument_parser()
-parser.add_argument("--train", default=True, help="True for train dataset, False for test dataset")
+parser.add_argument("--train", default=False, help="True for train dataset, False for test dataset")
 parser.add_argument("--debug", default=True, help="True for not using KeyFilterOutAux")
 parser.add_argument("--no_detection", default=False, help="used when train==False, if True, no detection result used")
 parser.add_argument("--obj_id", type=int, nargs='+', default=[], required=True, help="the obj id")

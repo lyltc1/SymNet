@@ -20,6 +20,7 @@ MODEL = dict(
         VISIB_MASK_LW=1,
         AMODAL_MASK_LOSS_TYPE="L1",  # choose from ["BCE", "L1"]
         AMODAL_MASK_LW=1,
+        CODE_BIT=16,
         CODE_LOSS_TYPE="BCE",  # choose from ["BCE", "L1"]
         CODE_LW=3,
     ),

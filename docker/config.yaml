@@ -1,0 +1,13 @@
+description: symnet_ycbv
+resources:
+  agent_label: rtx2080ti
+  slots: 8
+bind_mounts:
+  - host_path: /mnt/datasets/
+    container_path: /home/public_datasets/
+  - host_path: /mnt/u/linyongliang/
+    container_path: /home/
+  # - host_path: /mnt/data/linbo/
+  #   container_path: /home/datasets1/
+environment:
+  image: lyltc1/symnet:1.0.0

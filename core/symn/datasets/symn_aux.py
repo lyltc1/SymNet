@@ -102,7 +102,7 @@ class GTLoader(BopDatasetAux):
             assert code is not None
             inst['GT'] = code.copy() if self.copy else code
         except:
-            raise FileExistsError
+            raise FileExistsError(f"{fp} not exists")
         return inst
 
 
