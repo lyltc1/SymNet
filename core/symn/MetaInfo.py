@@ -16,7 +16,7 @@ project_root = None
 if username == "root" and len(hostname) > 10:  # run in author specific docker
     # docker path
     public_dataset_path = "/home/pub_datasets/"
-    user_dataset_path = "/home/linyongliang/dataset"
+    user_dataset_path = "/home/dataset"
     # project root and datasets
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     data_folder = join(project_root, 'datasets')
