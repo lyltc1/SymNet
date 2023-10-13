@@ -111,7 +111,7 @@ def main():
         cfg.OUTPUT_DIR = osp.join(cfg.OUTPUT_ROOT, out_str)
         cfg.VIS_DIR = osp.join(cfg.OUTPUT_DIR, "visualize")
         if not os.path.exists(cfg.OUTPUT_DIR):
-            os.mkdir(cfg.OUTPUT_DIR)
+            os.makedirs(cfg.OUTPUT_DIR,exist_ok=True)
         if not os.path.exists(cfg.VIS_DIR):
             os.mkdir(cfg.VIS_DIR)
 
@@ -127,15 +127,15 @@ def main():
     trainer = pl.Trainer(
         accelerator="gpu",
         strategy=strategy,
-        max_epochs=200,
+        max_epochs=cfg.TRAIN.TOTAL_EPOCHS,
         devices=args.gpus,
         callbacks=[
             pl.callbacks.LearningRateMonitor(logging_interval="step"),
             # if want to save top k, set save_top_k = 1, and every_n_epochs = 1, save_last=True;
             # if want to save every n epoch, set save_top_k=-1, and every_n_epochs.
-            pl.callbacks.ModelCheckpoint(dirpath=cfg.OUTPUT_DIR, save_top_k=-1,
-                                         save_last=False, monitor='valid/eval_loss', 
-                                         every_n_epochs=20),
+            pl.callbacks.ModelCheckpoint(dirpath=cfg.OUTPUT_DIR, save_top_k=1,
+                                         save_last=True, monitor='valid/eval_loss', 
+                                         every_n_epochs=1),
             TQDMProgressBar(refresh_rate=20),
         ],
         logger=[
