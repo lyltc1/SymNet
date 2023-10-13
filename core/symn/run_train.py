@@ -128,6 +128,7 @@ def main():
         accelerator="gpu",
         strategy=strategy,
         max_epochs=cfg.TRAIN.TOTAL_EPOCHS,
+
         devices=args.gpus,
         callbacks=[
             pl.callbacks.LearningRateMonitor(logging_interval="step"),
