@@ -74,6 +74,8 @@ python core/symn/run_train.py --config-file configs/symn/tless/symn_tless_config
 Train in mulit-gpu：
 ```
 python core/symn/run_train.py --config-file configs/symn/tless/symn_tless_config.py --gpus 0 1 2 3 4 5 --obj_id 4
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python core/symn/run_train.py --config-file configs/symn/ycbv/symn_ycbv_config_bit10_pbr.py --gpus 0 1 2 3 4 5 6 7 --obj_id 1
+
 ```
 Train in debug mode (smaller batch size set in code):
 ```

@@ -14,18 +14,26 @@ username = getpass.getuser()
 project_root = None
 
 if username == "root" and len(hostname) > 10:  # run in author specific docker
-    # docker path
-    public_dataset_path = "/home/pub_datasets/"
-    user_dataset_path = "/home/dataset"
-    # project root and datasets
+    # # docker path
+    # public_dataset_path = "/home/pub_datasets/"
+    # user_dataset_path = "/home/dataset"
+    # # project root and datasets
+    # project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    # data_folder = join(project_root, 'datasets')
+    # # concrete folder
+    # bop_folder = join(user_dataset_path, 'pbr')
+    # detections_folder = join(user_dataset_path, "detections")
+    # voc_folder = join(public_dataset_path, "det", "VOCdevkit")
+    # models_GT_color_folder = join(user_dataset_path, "symnet", "models_GT_color_v3")
+    # binary_code_folder = join(user_dataset_path, "symnet", "binary_code_v3")
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     data_folder = join(project_root, 'datasets')
     # concrete folder
-    bop_folder = join(user_dataset_path, 'pbr')
-    detections_folder = join(user_dataset_path, "detections")
-    voc_folder = join(public_dataset_path, "det", "VOCdevkit")
-    models_GT_color_folder = join(user_dataset_path, "symnet", "models_GT_color_v3")
-    binary_code_folder = join(user_dataset_path, "symnet", "binary_code_v3")
+    bop_folder = join(data_folder, 'BOP_DATASETS')
+    detections_folder = join(data_folder, "detections")
+    voc_folder = join(data_folder, "VOCdevkit")
+    models_GT_color_folder = join(data_folder, "models_GT_color")
+    binary_code_folder = join(data_folder, "binary_code")
 else:
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     data_folder = join(project_root, 'datasets')

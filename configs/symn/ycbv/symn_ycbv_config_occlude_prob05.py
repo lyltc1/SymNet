@@ -79,9 +79,9 @@ DATASETS = dict(
 
 TRAIN = dict(
     PRINT_FREQ=10,
-    NUM_WORKERS=2,
+    NUM_WORKERS=16,
     BATCH_SIZE=32,  # BATCH_SIZE for one gpu
-    TOTAL_EPOCHS=600,
+    TOTAL_EPOCHS=300,
     DEBUG_MODE=False,  # visualize some images during training and more out_dict
 )
 
