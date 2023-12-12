@@ -30,7 +30,7 @@ RUN chmod a+x /tmp/dockerfile_scripts/gdrnet/install_deps.sh &&\
 RUN chmod a+x /tmp/dockerfile_scripts/bop_toolkit/install_deps.sh &&\
     /tmp/dockerfile_scripts/bop_toolkit/install_deps.sh
 
-RUN pip install 'git+https://github.com/thodan/bop_toolkit.git'
+RUN pip install 'git+https://github.com/thodan/bop_toolkit.git'  # TODO, should download and install inside
 
 
 # 删除临时文件

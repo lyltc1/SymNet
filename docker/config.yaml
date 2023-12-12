@@ -1,4 +1,4 @@
-description: symnet_ycbv
+description: symnet_2080ti_slots8
 resources:
   agent_label: rtx2080ti
   slots: 8
@@ -7,7 +7,14 @@ bind_mounts:
     container_path: /home/public_datasets/
   - host_path: /mnt/u/linyongliang/
     container_path: /home/
-  # - host_path: /mnt/data/linbo/
-  #   container_path: /home/datasets1/
+  - host_path: /mnt/data/linbo/
+    container_path: /home/local_datasets/
 environment:
   image: lyltc1/symnet:1.0.0
+
+# conda activate (where determined installed)
+# det user login linyongliang
+# det shell start --config-file config.yaml
+# det shell list
+# det shell show_ssh_command 73b93ed3-b212-4f3f-bb6d-7bd8286a81f2
+# det shell kill 73b93ed3-b212-4f3f-bb6d-7bd8286a81f2
