@@ -45,3 +45,4 @@ dist/
 # project dirs
 /models
 /pretrained_backbone
+bop_toolkit

@@ -21,7 +21,7 @@ def find_files(base_path, dir_name, file_name):
     return paths
 
 paths = []
-base_path = "/home/Symnet/output/"
+base_path = "/home/Symnet/output/symnet_ycbv_16bit"
 dir_name = 'last'
 file_name = 'SymNet_ycbv-test.csv'
 file_paths = find_files(base_path, dir_name, file_name)

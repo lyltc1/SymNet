@@ -1,7 +1,7 @@
-description: symnet_2080ti_slots8
+description: symnet_2080ti_slots4
 resources:
   agent_label: rtx2080ti
-  slots: 8
+  slots: 4
 bind_mounts:
   - host_path: /mnt/datasets/
     container_path: /home/public_datasets/
@@ -16,5 +16,5 @@ environment:
 # det user login linyongliang
 # det shell start --config-file config.yaml
 # det shell list
-# det shell show_ssh_command 73b93ed3-b212-4f3f-bb6d-7bd8286a81f2
-# det shell kill 73b93ed3-b212-4f3f-bb6d-7bd8286a81f2
+# det shell show_ssh_command 60ae5e06-0bc0-4f7e-8bc8-4caf32e2296e
+# det shell kill 60ae5e06-0bc0-4f7e-8bc8-4caf32e2296e
