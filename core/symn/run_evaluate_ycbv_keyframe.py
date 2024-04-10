@@ -1,6 +1,6 @@
 """
 usages:
-python core/symn/run_evaluate.py --eval_folder output/SymNet_ycbv_obj15_xxx
+python core/symn/run_evaluate_ycbv_keyframe.py --eval_folder output/SymNet_ycbv_obj15_xxx
 """
 import os
 import sys
@@ -89,8 +89,6 @@ def write_cvs(evaluation_result_path, file_name_prefix, predictions):
                 f.write(",")
                 # time
                 f.write(f"{str(time)}\n")
-        # os.system("python bop_toolkit/scripts/eval_bop19_pose.py " + f"--result_filenames {os.path.abspath(filename)} " + f"--results_path {os.path.abspath(evaluation_result_path)} " +f"--eval_path {os.path.abspath(evaluation_result_path)}")
-        # os.system("python bop_toolkit/scripts/vis_est_poses.py " + f"--result_filenames {os.path.abspath(filename)} " + f"--output_path {os.path.abspath(evaluation_result_path)}")
 
 def main():
     parser = argparse.ArgumentParser()
@@ -111,8 +109,10 @@ def main():
     cfg = Config.fromfile(args.config_file)
     cfg.DATASETS.TEST_KEYFRAME="ycbv_test_targets_keyframe.json"
     cfg.DATASETS.TEST_DETECTION_TYPE="type2"
-    cfg.DATASETS.TEST_DETECTION_PATH="gdrnpp_yolox_detections/ycbv/test/test_bboxes/yolox_x_640_ycbv_pbr_ycbv_bop_test.json"
+    cfg.DATASETS.TEST_DETECTION_PATH="gdrnpp_yolox_detections/ycbv/test/test_bboxes/yolox_pbr_ycbv_keyframe.json"
     print("pbr only")
+    print(cfg.DATASETS.TEST_KEYFRAME)
+    print(cfg.DATASETS.TEST_DETECTION_PATH)
 
     # parse --ckpt, generate args.ckpt, do not use ckpt_for_last now
     ckpt = list()

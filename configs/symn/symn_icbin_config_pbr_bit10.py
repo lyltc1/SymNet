@@ -57,13 +57,13 @@ SOLVER = dict(
 )
 
 DATASETS = dict(
-    NAME="ycbv",
+    NAME="icbin",
     TRAIN=("train_pbr",),  # tuple, which is the subset of ("pbr", "real",)
     TEST=("test",),
     TEST_KEYFRAME="test_targets_bop19.json",  # choose from [None, "test_targets_bop19.json",
                                               #              "ycbv_test_targets_keyframe.json"]
     TEST_DETECTION_TYPE="type1",  # choose from ["type1" for yolox, "type2" for maskrcnn, "type3"]
-    TEST_DETECTION_PATH='zebrapose_detections/ycbv/fcos_V57eSE_MSx1333_ColorAugAAEWeaker_8e_ycbv_real_pbr_8e_test_keyframe.json',
+    TEST_DETECTION_PATH='detections/gdrnppdet-pbr/gdrnppdet-pbr_icbin-test_80434807-4692-4227-90bb-70212f3e8e66.json',
     TEST_SCORE_THR=0.01,  # used in test datasets
     TRAIN_CROP=[1.2, 1.5],  # TRAIN_CROP is used when detections not available
     TEST_CROP=[1.3, 1.3],  # TEST_CROP is used when detections avaliable
@@ -79,9 +79,9 @@ DATASETS = dict(
 
 TRAIN = dict(
     PRINT_FREQ=10,
-    NUM_WORKERS=20,
-    BATCH_SIZE=16,  # BATCH_SIZE for one gpu
-    TOTAL_EPOCHS=300,
+    NUM_WORKERS=2,
+    BATCH_SIZE=32,  # BATCH_SIZE for one gpu
+    TOTAL_EPOCHS=600,
     DEBUG_MODE=False,  # visualize some images during training and more out_dict
 )
 

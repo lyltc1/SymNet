@@ -1,7 +1,7 @@
-description: symnet_2080ti_slots4
+description: symnet_2080ti_slots8
 resources:
   agent_label: rtx2080ti
-  slots: 4
+  slots: 8
 bind_mounts:
   - host_path: /mnt/datasets/
     container_path: /home/public_datasets/
@@ -16,5 +16,7 @@ environment:
 # det user login linyongliang
 # det shell start --config-file config.yaml
 # det shell list
-# det shell show_ssh_command 60ae5e06-0bc0-4f7e-8bc8-4caf32e2296e
-# det shell kill 60ae5e06-0bc0-4f7e-8bc8-4caf32e2296e
+# det shell show_ssh_command db8e4fb8-f18f-4c91-8a98-6c5e650f13e8
+# det shell kill db8e4fb8-f18f-4c91-8a98-6c5e650f13e8
+# tmux
+# CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python core/symn/run_train.py --config-file configs/symn/ycbv/symn_ycbv_config_bit16_pbr.py --gpus 0 1 2 3 4 5 6 7 --obj_id 21
