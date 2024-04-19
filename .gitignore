@@ -35,11 +35,3 @@ dist/
 # VSCode editor settings
 .vscode
 
-# project dirs
-/datasets/BOP_DATASETS/*
-/datasets/detections/*
-/datasets/symnet_code/*
-/datasets/VOCdevkit/*
-/datasets/zebrapose_code/*
-/output/*
-/pretrained_backbone/*
