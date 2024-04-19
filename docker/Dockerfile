@@ -1,37 +1,40 @@
-FROM iaslab/env:cuda11.6-torch1.12-0.18.5
+ARG PYTORCH="1.13.1"
+ARG CUDA="11.6"
+ARG CUDNN="8"
 
-COPY dockerfile_scripts /tmp/dockerfile_scripts
-
-# ---- install ninja
-RUN apt-get update && apt-get install -y apt-utils
-RUN apt-get install -y ca-certificates wget sudo ninja-build
-
-# RUN pip config set global.index-url https://mirrors.zju.edu.cn/pypi/web/simple
-
-# ---- install tensorboard cmake
-RUN pip install cmake cython
-
-# ---- install detectron2
-RUN git clone https://github.com/facebookresearch/detectron2 detectron2
-# set FORCE_CUDA because during `docker build` cuda is not accessible
-ENV FORCE_CUDA="1"
-# This will by default build detectron2 for all common cuda architectures and take a lot more time,
-# because inside `docker build`, there is no way to tell which architecture will be used.
-# ARG TORCH_CUDA_ARCH_LIST="Kepler;Kepler+Tesla;Maxwell;Maxwell+Tegra;Pascal;Volta;Turing"
-ARG TORCH_CUDA_ARCH_LIST=7.5;8.6
-ENV TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}"
-RUN pip install -e detectron2
-ENV FVCORE_CACHE="/tmp"
-
-# ---- dependences
-RUN chmod a+x /tmp/dockerfile_scripts/gdrnet/install_deps.sh &&\
-    /tmp/dockerfile_scripts/gdrnet/install_deps.sh
-
-RUN chmod a+x /tmp/dockerfile_scripts/bop_toolkit/install_deps.sh &&\
-    /tmp/dockerfile_scripts/bop_toolkit/install_deps.sh
-
-RUN pip install 'git+https://github.com/thodan/bop_toolkit.git'  # TODO, should download and install inside
+FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-devel
 
 
-# 删除临时文件
-RUN rm -r /tmp/*
+# mirrors
+RUN mv /etc/apt/sources.list /etc/apt/sources.list.bak && \
+    echo "deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic main restricted universe multiverse" >> /etc/apt/sources.list && \
+    echo "deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-updates main restricted universe multiverse" >>/etc/apt/sources.list && \
+    echo "deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-backports main restricted universe multiverse" >>/etc/apt/sources.list && \
+    echo "deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-security main restricted universe multiverse" >>/etc/apt/sources.list && \
+    pip config set global.index-url https://mirrors.zju.edu.cn/pypi/web/simple
+
+# git
+RUN apt-get update && \
+    apt-get install -y git build-essential unzip
+
+# dependence
+RUN apt-get install -y build-essential unzip
+
+RUN pip install scipy kiwisolver==1.3.1 matplotlib imageio pypng Cython==0.29.24 PyOpenGL==3.1.0 triangle>=20190115.2 glumpy Pillow>=8.2.0 vispy>=0.6.5 openmim && \
+    mim install "mmcv>=2.0.0rc1" && \
+    python -m pip install 'git+https://github.com/facebookresearch/detectron2.git' && \
+    pip install pytorch-lightning==1.8.4.post0 imgaug moderngl trimesh transforms3d numba
+
+# clone the code
+WORKDIR /home
+RUN git clone https://github.com/lyltc1/SymNet.git && \
+    cd SymNet && \
+    git checkout -b mmcv2 origin/mmcv2
+    
+# Clean everything
+RUN pip config unset global.index-url
+RUN mv /etc/apt/sources.list.bak /etc/apt/sources.list
+RUN apt-get clean
+RUN rm -rf /var/lib/apt/lists/*
+WORKDIR /home/SymNet
+

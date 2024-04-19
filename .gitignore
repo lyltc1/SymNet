@@ -1,18 +1,11 @@
-pretrained_models
 .DS_Store
-# output dir
-/data
-/datasets
+
 *.so.*
 *.tar.gz
 *.egg-info*
-/output
 instant_test_output
 inference_test_output
 
-
-
-# compilation and distribution
 __pycache__
 _ext
 *.pyc
@@ -43,6 +36,10 @@ dist/
 .vscode
 
 # project dirs
-/models
-/pretrained_backbone
-bop_toolkit
+/datasets/BOP_DATASETS/*
+/datasets/detections/*
+/datasets/symnet_code/*
+/datasets/VOCdevkit/*
+/datasets/zebrapose_code/*
+/output/*
+/pretrained_backbone/*

@@ -1,59 +1,64 @@
-# SYM-Net
+# SymNet
 This repo provides the PyTorch implementation of the work:
+'SymNet: Symmetry-aware Surface Encoding for End-to-end Instance-level Object Pose Estimation'.
 
-**SYM-Net: Symmetry aware Net.
+## Environment
+- CUDA >= 11.1
+- torch >= 1.13.1 and torchvision >= 0.14.1
 
-## Overview
-
-
-## Requirements
-* Ubuntu 16.04/18.04/20.04/22.04, CUDA, python >= 3.6, PyTorch >= 1.6, torchvision
-
-## Installation
-One way is to set up the environment with docker.See [this](./docker/README.md)
-Another way is to install the following parts.
-
-* Install `detectron2` from [detectron2](https://github.com/facebookresearch/detectron2).
-* `sh scripts/install_deps.sh`
-* Download with ```git clone --recurse-submodules``` so that ```bop_toolkit``` will also be cloned.
-The structure of this project should look like below:
-```
-.
-├── asserts
-├── bop_toolkit
-├── ...
-└── ...
-```
+Setting up the environment can be tedious, so we've provided a Dockerfile to simplify the process. Please refer to the [README](./docker/README.md) in the Docker directory for more information.
 
 ## Datasets
 recommend using soft links (ln -sf)
 
-* Download the 6D pose datasets (LM, LM-O, YCB-V) from the [BOP website](https://bop.felk.cvut.cz/datasets/).
+1. Download the dataset TLESS from the [`BOP benchmark`](https://bop.felk.cvut.cz/datasets/). 
 
-* Download [VOC 2012 Train/Validation Data(1.9GB)](https://pjreddie.com/projects/pascal-voc-dataset-mirror/) for background images.
+2. Download [VOC 2012 Train/Validation Data(1.9GB)](https://pjreddie.com/projects/pascal-voc-dataset-mirror/) for background images.
 
-* Please also download the `binary_code` and `models_GT_color` and `detections`from here.
+3. Download required `XX_GT` folders of zebrapose from [`owncloud`](https://cloud.dfki.de/owncloud/index.php/s/zT7z7c3e666mJTW).
+Download `tless/train_pbr_GT.zip`, `tless/test_primesense_bop_GT.zip` and `tless/train_real_GT.zip`.
 
-* Download the `detections` from here.
-
-* Download the [pretrained resnet34 backbone](https://cloud.dfki.de/owncloud/index.php/s/zT7z7c3e666mJTW), save them under `./pretrained_backbone`.
+4. Download pretrained_backbone from [`owncloud`](https://cloud.dfki.de/owncloud/index.php/s/zT7z7c3e666mJTW), note the path should be modified.
 
 The structure of this project should look like below:
 ```
 # recommend using soft links (ln -sf)
-.
+Symnet
 ├── asserts
 ├── bop_toolkit
-├── datasets/
+├── datasets
     ├── BOP_DATASETS
-        ├──lm
-        ├──lmo
-        ├──ycbv
-        └── ...
-    ├── binary_code
-    ├── models_GT_color
-    ├── VOCdevkit
+        ├──tless
+            ├── models
+            ├── models_cad
+            ├── models_eval
+            ├── train_primesense
+            ├── train_pbr
+            ├── test_primesense
+            ├── test_targets_bop19.json
+    ├── zebrapose_code
+        ├── tless
+            ├── train_pbr_GT (unzip from `train_pbr_GT.zip`)
+                ├── 000000
+                    ├── 000000_000000.png
+                    ├── ...
+            ├── test_primesense_GT (unzip from `test_primesense_bop_GT.zip`)
+            ├── train_primesense_GT (unzip from `train_real_GT.zip`)
+    ├── symnet_code (not needed for sandeep's ablation study)
+        ├── tless (not needed for sandeep's ablation study)
+            ├── train_pbr_GT (unzip from `train_pbr_GT.zip`) (not needed for sandeep's ablation study)
     ├── detections
+            ├── gdrnppdet-pbr/
+                ├── gdrnppdet-pbr_tless-test_bed8...json
+            ├── gdrnppdet-pbrreal/
+            ├── zebrapose_detections/
+                ├── tless
+                    ├── tless_bop_pbr_only.json
+    ├── VOCdevkit
+            ├── VOC2012/
+                ├── JPEGImages/
+                ├── SegmentationClass/
+                ├── SegmentationObject/
 ├──pretrained_backbone/
     └── resnet34-333f7ec4.pth
 ├── docker
@@ -61,6 +66,8 @@ The structure of this project should look like below:
 └── ...
 ```
 
+
+<!-- 
 
 ## Training symnet
 `python core/symn/run_train.py <config_path> <gpu_ids> <obj_id>(other args)`
@@ -146,4 +153,4 @@ all path of datasets is defined in core/symn/MetaInfo.py, check it or change it.
 ```
 # untrack the file if modified locally
 git update-index --assume-unchanged "core/symn/MetaInfo.py"
-```
+``` -->

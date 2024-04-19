@@ -1,14 +1,69 @@
 # README
 
-## Build 
-
+## Build or Pull
+Option1: Just pull the whole image for DockerHub.
 ```bash
-docker build -t symnet:cuda116-torch112-detectron2-bop-0.0.6 .
+docker pull lyltc1/SymNet:mmcv2
+```
+Option2: Build the image by yourself.
+Note: There are some mirror settings which need to be adapted. The default setting is for usage in China. Just remove the mirror setting if needed.
+```bash
+docker build -t lyltc1/symnet:mmcv2 .
+```
+## Run Docker
+Pay attention to the dataset and output volume.
+```
+docker run -it --runtime=nvidia -e NVIDIA_DRIVER_CAPABILITIES=all \
+--gpus all --shm-size 12G --device=/dev/dri --group-add video \
+--volume=/tmp/.X11-unix:/tmp/.X11-unix --env="DISPLAY=$DISPLAY" \
+--env="QT_X11_NO_MITSHM=1" --name SymNet_mmcv2 \
+-v path/to/dataset/:/home/dataset:ro \
+-v path/to/output/:/home/SymNet/output:rw \
+lyltc1/symnet:mmcv2 /bin/bash
+```
+example:
+```
+docker run -it --runtime=nvidia -e NVIDIA_DRIVER_CAPABILITIES=all \
+--gpus all --shm-size 12G --device=/dev/dri --group-add video \
+-p 8031:22 \
+--volume=/tmp/.X11-unix:/tmp/.X11-unix --env="DISPLAY=$DISPLAY" \
+--env="QT_X11_NO_MITSHM=1" --name SymNet_mmcv2 \
+-v /home/lyl/dataset/:/home/dataset:ro \
+-v /home/lyl/git/output/:/home/SymNet/output:rw \
+lyltc1/symnet:mmcv2 /bin/bash
 ```
 
-## Det
+## SoftLink
+Note this part is to link the dataset and output, it's depend on your volume.
+For me, the structure of dataset:
 ```
-det user login
-det shell start --config-file config.yaml
-det shell show_ssh_command cdf4a198-8e3e-4706-b911-b75d025303a8
+/home/lyl/dataset/
+    ├── pbr
+        ├── tless
+            ├── models
+            ├── train_pbr
+            ├── test_primesense
+            ├── test_targets_bop19.json
+    ├── VOCdevkit
+        ├── VOC2012/
+            ├── JPEGImages/
+            ├── SegmentationClass/
+            ├── SegmentationObject/
+    ├── zebrapose
+        ├── zebrapose_code/
+            ├── tless
+                ├── train_pbr_GT
+                ├── train_primesense_GT
+                ├── test_primesense_GT
+    ├── symnet
+        ├── detections
+            ├── gdrnppdet-pbr/
+                ├── gdrnppdet-pbr_tless-test_bed8...json
+            ├── gdrnppdet-pbrreal/
+            ├── zebrapose_detections/
+                ├── tless
+                    ├── tless_bop_pbr_only.json
+    ├── pretrained_backbone
+        ├──resnet
+            ├──resnet34-333f7ec4.pth
 ```
