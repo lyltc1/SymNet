@@ -33,6 +33,11 @@ docker run -it --runtime=nvidia -e NVIDIA_DRIVER_CAPABILITIES=all \
 lyltc1/symnet:mmcv2 /bin/bash
 ```
 
+## UpdateCode
+```
+git pull
+```
+
 ## SoftLink
 Note this part is to link the dataset and output, it's depend on your volume.
 For me, the structure of dataset:
@@ -66,4 +71,22 @@ For me, the structure of dataset:
     ├── pretrained_backbone
         ├──resnet
             ├──resnet34-333f7ec4.pth
+```
+Make the softlink to the project
+1. link pretrained_backbone
+```
+ln -s /home/dataset/pretrained_backbone/resnet/resnet34-333f7ec4.pth \
+/home/SymNet/pretrained_backbone/
+```
+2. link bop dataset
+```
+ln -s /home/dataset/pbr/tless/ /home/SymNet/datasets/BOP_DATASETS/
+``` 
+3. link detections
+```
+ln -s /home/dataset/symnet/detections/* /home/SymNet/datasets/detections/
+```
+4. link VOC
+```
+ln -s /home/dataset/VOCdevkit/* /home/SymNet/datasets/VOCdevkit/
 ```
