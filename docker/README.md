@@ -19,7 +19,7 @@ docker run -it --runtime=nvidia -e NVIDIA_DRIVER_CAPABILITIES=all \
 --env="QT_X11_NO_MITSHM=1" --name SymNet_mmcv2 \
 -v path/to/dataset/:/home/dataset:ro \
 -v path/to/output/:/home/SymNet/output:rw \
-lyltc1/symnet:mmcv2 /bin/bash
+lyltc1/symnet:mmcv2
 ```
 example:
 ```
@@ -30,7 +30,7 @@ docker run -it --runtime=nvidia -e NVIDIA_DRIVER_CAPABILITIES=all \
 --env="QT_X11_NO_MITSHM=1" --name SymNet_mmcv2 \
 -v /home/lyl/dataset/:/home/dataset:ro \
 -v /home/lyl/git/output/:/home/SymNet/output:rw \
-lyltc1/symnet:mmcv2 /bin/bash
+lyltc1/symnet:mmcv2
 ```
 
 ## UpdateCode
@@ -117,4 +117,14 @@ ln -s /home/dataset/symnet/binary_code/icbin/ /home/SymNet/datasets/symnet_code/
 3. (optional)link zebrapose_code (not needed for Sandeep)
 ```
 ln -s /home/dataset/zebrapose/zebrapose_code/icbin/ /home/SymNet/datasets/zebrapose_code/
+```
+
+## Problems and Solve
+1. python can not be found
+```
+conda init
+```
+1. cannot import cv2
+```
+/opt/conda/bin/python -m pip install opencv-python-headless
 ```

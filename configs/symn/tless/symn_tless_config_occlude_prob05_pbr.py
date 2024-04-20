@@ -10,7 +10,6 @@ MODEL = dict(
         INPUT_CHANNEL=3,
         CONCAT=True,
         FREEZE=False,
-        # PRETRAINED="torchvision://resnet34",  # fixed
         PRETRAINED="pretrained_backbone/resnet34-333f7ec4.pth",
     ),
     GEOMETRY_NET=dict(
