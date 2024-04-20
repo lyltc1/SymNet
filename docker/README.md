@@ -100,3 +100,19 @@ ln -s /home/dataset/zebrapose/zebrapose_code/tless/ /home/SymNet/datasets/zebrap
 ```
 ln -s /home/dataset/symnet/binary_code/tless/ /home/SymNet/datasets/symnet_code/
 ```
+
+## SoftLink for another dataset (not needed for Sandeep)
+Use icbin as an example:
+
+1. link bop dataset (not needed for Sandeep)
+```
+ln -s /home/dataset/pbr/icbin/ /home/SymNet/datasets/BOP_DATASETS/
+``` 
+2. link symnet_code (not needed for Sandeep)
+```
+ln -s /home/dataset/symnet/binary_code/icbin/ /home/SymNet/datasets/symnet_code/
+```
+3. (optional)link zebrapose_code (not needed for Sandeep)
+```
+ln -s /home/dataset/zebrapose/zebrapose_code/icbin/ /home/SymNet/datasets/zebrapose_code/
+```
