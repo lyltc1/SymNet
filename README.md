@@ -1,6 +1,6 @@
 # SymNet
-This repo provides the PyTorch implementation of the work:
-'SymNet: Symmetry-aware Surface Encoding for End-to-end Instance-level Object Pose Estimation'.
+This repo provides the PyTorch implementation of our SymNet work:
+”SymNet: Symmetry-aware Surface Encoding for End-to-end Instance-level Object Pose Estimation”. Not published yet.
 
 ## Environment
 - CUDA >= 11.1
@@ -9,8 +9,6 @@ This repo provides the PyTorch implementation of the work:
 Setting up the environment can be tedious, so we've provided a Dockerfile to simplify the process. Please refer to the [README](./docker/README.md) in the Docker directory for more information.
 
 ## Datasets
-recommend using soft links (ln -sf)
-
 1. Download the dataset TLESS from the [`BOP benchmark`](https://bop.felk.cvut.cz/datasets/). 
 
 2. Download [VOC 2012 Train/Validation Data(1.9GB)](https://pjreddie.com/projects/pascal-voc-dataset-mirror/) for background images.
@@ -20,7 +18,7 @@ Download `tless/train_pbr_GT.zip`, `tless/test_primesense_bop_GT.zip` and `tless
 
 4. Download pretrained_backbone from [`owncloud`](https://cloud.dfki.de/owncloud/index.php/s/zT7z7c3e666mJTW), note the path should be modified.
 
-The structure of this project should look like below:
+The structure of this project should look like below after using soft links:
 ```
 # recommend using soft links (ln -sf)
 Symnet

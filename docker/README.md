@@ -1,6 +1,6 @@
 # README
 
-## Build or Pull
+## Pull or Build 
 Option1: Just pull the whole image for DockerHub.
 ```bash
 docker pull lyltc1/SymNet:mmcv2
@@ -34,7 +34,9 @@ lyltc1/symnet:mmcv2 /bin/bash
 ```
 
 ## UpdateCode
+This is important since the code is under development.
 ```
+cd /home/SymNet
 git pull
 ```
 
@@ -89,4 +91,12 @@ ln -s /home/dataset/symnet/detections/* /home/SymNet/datasets/detections/
 4. link VOC
 ```
 ln -s /home/dataset/VOCdevkit/* /home/SymNet/datasets/VOCdevkit/
+```
+5. link zebrapose_code
+```
+ln -s /home/dataset/zebrapose/zebrapose_code/tless/ /home/SymNet/datasets/zebrapose_code/
+```
+6. link symnet_code (not needed for Sandeep)
+```
+ln -s /home/dataset/symnet/binary_code/tless/ /home/SymNet/datasets/symnet_code/
 ```
