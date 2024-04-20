@@ -80,7 +80,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python core/symn/run_train.py --config-file
 ```
 Some more args explained:
 ```python
---debug True  # Train in smaller batch size set in code
+--small_dataset  # Train in smaller dataset for debug
 ```
 
 ## Evaluation

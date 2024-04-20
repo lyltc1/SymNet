@@ -3,7 +3,7 @@ import torch
 from .resnet_backbone import resnet_spec
 from detectron2.layers.batch_norm import BatchNorm2d
 from torch.nn.modules.batchnorm import _BatchNorm
-from mmcv.cnn import normal_init, constant_init
+from mmengine.model import normal_init, constant_init
 
 
 class CDPNGeoNet(nn.Module):

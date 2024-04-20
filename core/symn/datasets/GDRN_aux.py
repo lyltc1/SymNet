@@ -5,7 +5,7 @@ from os.path import join
 import os.path as osp
 import hashlib
 import logging
-import mmcv
+import mmengine
 from imgaug.augmenters import (Sequential, Sometimes, SaltAndPepper, GaussianBlur, MotionBlur,
                                Add, Multiply, CoarseDropout, Invert, LinearContrast, pillike, AdditiveGaussianNoise)
 from .BOPDataset import BopTrainDataset, BopDatasetAux
@@ -57,10 +57,10 @@ class ReplaceBgAux(BopDatasetAux):
     def init(self, dataset: BopTrainDataset):
         hashed_file_name = hashlib.md5(("{}_bg_imgs".format(self.bg_type)).encode("utf-8")).hexdigest()
         cache_path = osp.join(dataset.meta_info.data_folder, "cache_{}_{}.pkl".format(self.bg_type, hashed_file_name))
-        mmcv.mkdir_or_exist(osp.dirname(cache_path))
+        mmengine.utils.mkdir_or_exist(osp.dirname(cache_path))
         if osp.exists(cache_path):
             logger.info("get bg_paths from cache file: {}".format(cache_path))
-            bg_img_paths = mmcv.load(cache_path)
+            bg_img_paths = mmengine.load(cache_path)
             logger.info("num bg imgs: {}".format(len(bg_img_paths)))
             assert len(bg_img_paths) > 0
             self.bg_img_paths = bg_img_paths
@@ -82,7 +82,7 @@ class ReplaceBgAux(BopDatasetAux):
             raise NotImplementedError
         num_bg_imgs = min(len(bg_img_paths), 10000)
         bg_img_paths = np.random.choice(bg_img_paths, num_bg_imgs)
-        mmcv.dump(bg_img_paths, cache_path)
+        mmengine.dump(bg_img_paths, cache_path)
         self.bg_img_paths = bg_img_paths
 
     def __call__(self, inst: dict, dataset: BopTrainDataset) -> dict:
@@ -93,7 +93,7 @@ class ReplaceBgAux(BopDatasetAux):
                 ind = np.random.randint(0, len(self.bg_img_paths) - 1)
                 filename = self.bg_img_paths[ind]
                 bg_img = get_bg_image(filename, H, W)
-                mask_bg = ~inst['mask_visib_crop'].astype(np.bool)
+                mask_bg = ~inst['mask_visib_crop'].astype(bool)
                 im[mask_bg] = bg_img[mask_bg]
                 inst['rgb_crop'] = im
             else:
@@ -102,7 +102,7 @@ class ReplaceBgAux(BopDatasetAux):
                 ind = np.random.randint(0, len(self.bg_img_paths) - 1)
                 filename = self.bg_img_paths[ind]
                 bg_img = get_bg_image(filename, H, W)
-                mask_bg = ~inst['mask_visib'].astype(np.bool)
+                mask_bg = ~inst['mask_visib'].astype(bool)
                 im[mask_bg] = bg_img[mask_bg]
                 inst['rgb'] = im
         return inst

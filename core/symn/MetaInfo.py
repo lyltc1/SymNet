@@ -3,46 +3,18 @@
 """
 import os
 from os.path import join
-import getpass
-import socket
-
 from bop_toolkit_lib.dataset_params import get_model_params
 
-hostname = socket.gethostname()
-username = getpass.getuser()
 
-project_root = None
-
-if username == "root" and len(hostname) > 10:  # run in author specific docker
-    # # docker path
-    # public_dataset_path = "/home/pub_datasets/"
-    # user_dataset_path = "/home/dataset"
-    # # project root and datasets
-    # project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    # data_folder = join(project_root, 'datasets')
-    # # concrete folder
-    # bop_folder = join(user_dataset_path, 'pbr')
-    # detections_folder = join(user_dataset_path, "detections")
-    # voc_folder = join(public_dataset_path, "det", "VOCdevkit")
-    # models_GT_color_folder = join(user_dataset_path, "symnet", "models_GT_color_v3")
-    # binary_code_folder = join(user_dataset_path, "symnet", "binary_code_v3")
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    data_folder = join(project_root, 'datasets')
-    # concrete folder
-    bop_folder = join(data_folder, 'BOP_DATASETS')
-    detections_folder = join(data_folder, "detections")
-    voc_folder = join(data_folder, "VOCdevkit")
-    models_GT_color_folder = join(data_folder, "models_GT_color")
-    binary_code_folder = join(data_folder, "binary_code")
-else:
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    data_folder = join(project_root, 'datasets')
-    # concrete folder
-    bop_folder = join(data_folder, 'BOP_DATASETS')
-    detections_folder = join(data_folder, "detections")
-    voc_folder = join(data_folder, "VOCdevkit")
-    models_GT_color_folder = join(data_folder, "models_GT_color")
-    binary_code_folder = join(data_folder, "binary_code")
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+data_folder = join(project_root, 'datasets')
+# concrete folder
+bop_folder = join(data_folder, 'BOP_DATASETS')
+detections_folder = join(data_folder, "detections")
+voc_folder = join(data_folder, "VOCdevkit")
+models_GT_color_folder = join(data_folder, "models_GT_color")
+symnet_code_folder = join(data_folder, "symnet_code")
+zebrapose_code_folder = join(data_folder, "zebrapose_code")
 
 
 class MetaInfo:
@@ -60,4 +32,6 @@ class MetaInfo:
         self.detections_folder = detections_folder
         self.voc_folder = voc_folder
         self.models_GT_color_folder = join(models_GT_color_folder, name)
-        self.binary_code_folder = join(binary_code_folder, name)
+        # self.binary_code_folder = join(binary_code_folder, name)
+        self.zebrapose_code_folder = join(zebrapose_code_folder, name)
+        self.symnet_code_folder = join(symnet_code_folder, name)

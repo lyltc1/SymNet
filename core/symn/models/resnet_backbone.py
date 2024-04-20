@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 from torchvision.models.resnet import BasicBlock, Bottleneck
-from mmcv.cnn import normal_init, constant_init
+from mmengine.model import normal_init, constant_init
 
 
 # Specification
@@ -21,7 +21,9 @@ class ResNetBackboneNetForCDPN(nn.Module):
         self.concat = concat
         self.inplanes = 64
         super().__init__()
-        self.conv1 = nn.Conv2d(in_channel, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(
+            in_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
+        )
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -39,7 +41,13 @@ class ResNetBackboneNetForCDPN(nn.Module):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                nn.Conv2d(self.inplanes, planes * block.expansion, kernel_size=1, stride=stride, bias=False),
+                nn.Conv2d(
+                    self.inplanes,
+                    planes * block.expansion,
+                    kernel_size=1,
+                    stride=stride,
+                    bias=False,
+                ),
                 nn.BatchNorm2d(planes * block.expansion),
             )
         layers = [block(self.inplanes, planes, stride, downsample)]
@@ -65,7 +73,9 @@ class ResNetBackboneNetForCDPN(nn.Module):
                 else:
                     return x_f8.detach()
         else:
-            x = self.conv1(x)  # x.shape [bsz, 3, 256, 256] -> x.shape [bsz, 64, 128, 128]
+            x = self.conv1(
+                x
+            )  # x.shape [bsz, 3, 256, 256] -> x.shape [bsz, 64, 128, 128]
             x = self.bn1(x)
             x_f128 = self.relu(x)
             x_low_feature = self.maxpool(x_f128)  # x.shape [bsz, 64, 64, 64]
@@ -78,22 +88,41 @@ class ResNetBackboneNetForCDPN(nn.Module):
             else:
                 return x_f8
 
+
 class MyBasicBlock(nn.Module):
     expansion = 1
 
     def __init__(self, in_channels, channels, stride=1, dilation=1):
         super(MyBasicBlock, self).__init__()
 
-        out_channels = self.expansion*channels
+        out_channels = self.expansion * channels
 
-        self.conv1 = nn.Conv2d(in_channels, channels, kernel_size=3, stride=stride, padding=dilation, dilation=dilation, bias=False)
+        self.conv1 = nn.Conv2d(
+            in_channels,
+            channels,
+            kernel_size=3,
+            stride=stride,
+            padding=dilation,
+            dilation=dilation,
+            bias=False,
+        )
         self.bn1 = nn.BatchNorm2d(channels)
 
-        self.conv2 = nn.Conv2d(channels, channels, kernel_size=3, stride=1, padding=dilation, dilation=dilation, bias=False)
+        self.conv2 = nn.Conv2d(
+            channels,
+            channels,
+            kernel_size=3,
+            stride=1,
+            padding=dilation,
+            dilation=dilation,
+            bias=False,
+        )
         self.bn2 = nn.BatchNorm2d(channels)
 
         if (stride != 1) or (in_channels != out_channels):
-            conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False)
+            conv = nn.Conv2d(
+                in_channels, out_channels, kernel_size=1, stride=stride, bias=False
+            )
             bn = nn.BatchNorm2d(out_channels)
             self.downsample = nn.Sequential(conv, bn)
         else:
@@ -106,14 +135,25 @@ class MyBasicBlock(nn.Module):
         out = F.relu(out)
         return out
 
+
 def my_make_layer(block, in_channels, channels, num_blocks, stride=1, dilation=1):
-    strides = [stride] + [1]*(num_blocks - 1)  # (stride == 2, num_blocks == 4 --> strides == [2, 1, 1, 1])
+    strides = [stride] + [1] * (
+        num_blocks - 1
+    )  # (stride == 2, num_blocks == 4 --> strides == [2, 1, 1, 1])
     blocks = []
     for stride in strides:
-        blocks.append(block(in_channels=in_channels, channels=channels, stride=stride, dilation=dilation))
-        in_channels = block.expansion*channels
+        blocks.append(
+            block(
+                in_channels=in_channels,
+                channels=channels,
+                stride=stride,
+                dilation=dilation,
+            )
+        )
+        in_channels = block.expansion * channels
     layer = nn.Sequential(*blocks)
     return layer
+
 
 class ResNetBackboneNetForASPP(nn.Module):
     def __init__(self, block, layers, in_channel=3, freeze=False, concat=False):
@@ -121,14 +161,30 @@ class ResNetBackboneNetForASPP(nn.Module):
         self.concat = concat
         self.inplanes = 64
         super().__init__()
-        self.conv1 = nn.Conv2d(in_channel, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(
+            in_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
+        )
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
-        self.new_layer3 = my_make_layer(MyBasicBlock, in_channels=128, channels=256, num_blocks=6, stride=1, dilation=2)
-        self.new_layer4 = my_make_layer(MyBasicBlock, in_channels=256, channels=512, num_blocks=3, stride=1, dilation=4)
+        self.new_layer3 = my_make_layer(
+            MyBasicBlock,
+            in_channels=128,
+            channels=256,
+            num_blocks=6,
+            stride=1,
+            dilation=2,
+        )
+        self.new_layer4 = my_make_layer(
+            MyBasicBlock,
+            in_channels=256,
+            channels=512,
+            num_blocks=3,
+            stride=1,
+            dilation=4,
+        )
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 normal_init(m, std=0.001)
@@ -139,7 +195,13 @@ class ResNetBackboneNetForASPP(nn.Module):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                nn.Conv2d(self.inplanes, planes * block.expansion, kernel_size=1, stride=stride, bias=False),
+                nn.Conv2d(
+                    self.inplanes,
+                    planes * block.expansion,
+                    kernel_size=1,
+                    stride=stride,
+                    bias=False,
+                ),
                 nn.BatchNorm2d(planes * block.expansion),
             )
         layers = [block(self.inplanes, planes, stride, downsample)]
@@ -165,7 +227,9 @@ class ResNetBackboneNetForASPP(nn.Module):
                 else:
                     return x_f32.detach()
         else:
-            x = self.conv1(x)  # x.shape [bsz, 3, 256, 256] -> x.shape [bsz, 64, 128, 128]
+            x = self.conv1(
+                x
+            )  # x.shape [bsz, 3, 256, 256] -> x.shape [bsz, 64, 128, 128]
             x = self.bn1(x)
             x_f128 = self.relu(x)
             x_low_feature = self.maxpool(x_f128)  # x.shape [bsz, 64, 64, 64]

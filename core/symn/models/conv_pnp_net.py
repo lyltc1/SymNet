@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torch import nn
-from mmcv.cnn import normal_init, constant_init
+from mmengine.model import normal_init, constant_init
 
 
 class ConvPnPNet(nn.Module):

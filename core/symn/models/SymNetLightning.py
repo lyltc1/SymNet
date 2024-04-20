@@ -2,7 +2,11 @@ import logging
 from functools import partial
 import torch
 import torch.nn as nn
-from .resnet_backbone import ResNetBackboneNetForCDPN, ResNetBackboneNetForASPP, resnet_spec
+from .resnet_backbone import (
+    ResNetBackboneNetForCDPN,
+    ResNetBackboneNetForASPP,
+    resnet_spec,
+)
 from .cdpn_geo_net import CDPNGeoNet
 from .aspp_geo_net import ASPPGeoNet
 from .conv_pnp_net import ConvPnPNet
@@ -29,26 +33,45 @@ class SymNet(pl.LightningModule):
         self.pnp_net = pnp_net
         self.num_classes = cfg.DATASETS.NUM_CLASSES
 
-        if cfg.MODEL.PNP_NET.R_type == 'R_allo':
-            sym_axis = cfg.DATASETS.get('sym_axis', -1)
+        if cfg.MODEL.PNP_NET.R_type == "R_allo":
+            sym_axis = cfg.DATASETS.get("sym_axis", -1)
             if sym_axis == -1:
                 self.ortho6d_to_mat_batch = ortho6d_to_mat_batch
                 assert cfg.MODEL.PNP_NET.R_ALLO_SYM_LW == 0
             elif sym_axis in [0, 1, 2]:
                 self.sym_axis = sym_axis
-                self.ortho6d_to_mat_batch = partial(ortho6d_to_mat_with_axis_batch, axis=sym_axis)
+                self.ortho6d_to_mat_batch = partial(
+                    ortho6d_to_mat_with_axis_batch, axis=sym_axis
+                )
             else:
                 raise ArithmeticError("sym_axis must be chosen in [-1, 0, 1, 2]")
-        elif cfg.MODEL.PNP_NET.R_type == 'R_allo_6d':
+        elif cfg.MODEL.PNP_NET.R_type == "R_allo_6d":
             self.ortho6d_to_mat_batch = ortho6d_to_mat_batch
             assert cfg.MODEL.PNP_NET.R_ALLO_SYM_LW == 0
 
         if self.num_classes > 1 and self.sym_axis is not None:
             raise NotImplementedError("sym_axis only use for per object training")
 
-    def step(self, x, K, AABB, obj_idx=0, gt_visib_mask=None, gt_amodal_mask=None, gt_binary_code=None, gt_R=None,
-             gt_t=None, gt_SITE=None, gt_allo_rot6d=None, gt_allo=None, points=None, extents=None, sym_infos=None,
-             do_loss=False, do_output=False):
+    def step(
+        self,
+        x,
+        K,
+        AABB,
+        obj_idx=0,
+        gt_visib_mask=None,
+        gt_amodal_mask=None,
+        gt_binary_code=None,
+        gt_R=None,
+        gt_t=None,
+        gt_SITE=None,
+        gt_allo_rot6d=None,
+        gt_allo=None,
+        points=None,
+        extents=None,
+        sym_infos=None,
+        do_loss=False,
+        do_output=False,
+    ):
         """
         Args:
             x [batch_size(abb. b), 3, 256, 256] rgb_crop
@@ -68,14 +91,18 @@ class SymNet(pl.LightningModule):
         cfg = self.cfg
         geometry_net_cfg = self.cfg.MODEL.GEOMETRY_NET
         if gt_binary_code is not None:
-            gt_binary_code = gt_binary_code[:, :geometry_net_cfg.CODE_BIT, :, :]
+            gt_binary_code = gt_binary_code[:, : geometry_net_cfg.CODE_BIT, :, :]
         if self.concat:
             if "aspp" in self.geometry_net_name:
                 x_f32, x_f64, x_f128 = self.backbone(x)
-                visib_mask, amodal_mask, binary_code = self.geometry_net(x_f32, x_f64, x_f128)
+                visib_mask, amodal_mask, binary_code = self.geometry_net(
+                    x_f32, x_f64, x_f128
+                )
             elif "cdpn" in self.geometry_net_name:
                 x_f8, x_f16, x_f32, x_f64 = self.backbone(x)
-                visib_mask, amodal_mask, binary_code = self.geometry_net(x_f8, x_f16, x_f32, x_f64)
+                visib_mask, amodal_mask, binary_code = self.geometry_net(
+                    x_f8, x_f16, x_f32, x_f64
+                )
         else:
             if "aspp" in self.geometry_net_name:
                 x_f32 = self.backbone(x)
@@ -93,7 +120,9 @@ class SymNet(pl.LightningModule):
             visib_mask = visib_mask[torch.arange(bs).to(device), obj_idx]
             amodal_mask = amodal_mask.view(bs, self.num_classes, 1, res, res)
             amodal_mask = amodal_mask[torch.arange(bs).to(device), obj_idx]
-            binary_code = binary_code.view(bs, self.num_classes, geometry_net_cfg.CODE_BIT, res, res)
+            binary_code = binary_code.view(
+                bs, self.num_classes, geometry_net_cfg.CODE_BIT, res, res
+            )
             binary_code = binary_code[torch.arange(bs).to(device), obj_idx]
 
         if self.end_to_end:
@@ -105,17 +134,24 @@ class SymNet(pl.LightningModule):
             amodal_mask_prob = torch.sigmoid(amodal_mask).detach()
             binary_code_prob = torch.sigmoid(binary_code).detach()
 
-        rot_param, SITE = self.pnp_net(visib_mask_prob, amodal_mask_prob, binary_code_prob)
+        rot_param, SITE = self.pnp_net(
+            visib_mask_prob, amodal_mask_prob, binary_code_prob
+        )
         SITE[:, 2] *= 1000
         R_allo = self.ortho6d_to_mat_batch(rot_param)
         pred_ego_rot, pred_trans = pose_from_param(R_allo, SITE, K, res * 2, AABB)
 
         if do_output:
             out_dict = {"rot": pred_ego_rot, "trans": pred_trans}
-            out_dict.update({"visib_mask_prob": visib_mask_prob,
-                             "amodal_mask_prob": amodal_mask_prob,
-                             "binary_code_prob": binary_code_prob,
-                             "rot_param": rot_param, "SITE": SITE})
+            out_dict.update(
+                {
+                    "visib_mask_prob": visib_mask_prob,
+                    "amodal_mask_prob": amodal_mask_prob,
+                    "binary_code_prob": binary_code_prob,
+                    "rot_param": rot_param,
+                    "SITE": SITE,
+                }
+            )
         if do_loss:  # train
             loss_dict = self.symn_loss(
                 visib_mask=visib_mask,
@@ -141,8 +177,24 @@ class SymNet(pl.LightningModule):
         elif do_output:
             return out_dict
 
-    def symn_loss(self, visib_mask, gt_visib_mask, amodal_mask, gt_amodal_mask, binary_code,
-                  gt_binary_code, SITE, gt_SITE, R, gt_R, R_allo, gt_allo, points, extents, sym_infos):
+    def symn_loss(
+        self,
+        visib_mask,
+        gt_visib_mask,
+        amodal_mask,
+        gt_amodal_mask,
+        binary_code,
+        gt_binary_code,
+        SITE,
+        gt_SITE,
+        R,
+        gt_R,
+        R_allo,
+        gt_allo,
+        points,
+        extents,
+        sym_infos,
+    ):
         geometry_net_cfg = self.cfg.MODEL.GEOMETRY_NET
         pnp_net_cfg = self.cfg.MODEL.PNP_NET
         loss_dict = {}
@@ -154,16 +206,28 @@ class SymNet(pl.LightningModule):
             binary_code = mask_for_code * binary_code
             if code_loss_type == "BCE":
                 loss_func = nn.BCEWithLogitsLoss(reduction="mean")
-                binary_code = binary_code.reshape(-1, binary_code.shape[2], binary_code.shape[3])
-                gt_binary_code = gt_binary_code.reshape(-1, gt_binary_code.shape[2], gt_binary_code.shape[3])
+                binary_code = binary_code.reshape(
+                    -1, binary_code.shape[2], binary_code.shape[3]
+                )
+                gt_binary_code = gt_binary_code.reshape(
+                    -1, gt_binary_code.shape[2], gt_binary_code.shape[3]
+                )
             elif code_loss_type == "L1":
                 loss_func = nn.L1Loss(reduction="mean")
-                binary_code = binary_code.reshape(-1, 1, binary_code.shape[2], binary_code.shape[3])
+                binary_code = binary_code.reshape(
+                    -1, 1, binary_code.shape[2], binary_code.shape[3]
+                )
                 binary_code = torch.sigmoid(binary_code)
-                gt_binary_code = gt_binary_code.view(-1, 1, gt_binary_code.shape[2], gt_binary_code.shape[3])
+                gt_binary_code = gt_binary_code.view(
+                    -1, 1, gt_binary_code.shape[2], gt_binary_code.shape[3]
+                )
             else:
-                raise NotImplementedError(f"unknown visib_mask loss type: {code_loss_type}")
-            loss_dict["loss_code"] = loss_func(binary_code, gt_binary_code) * geometry_net_cfg.CODE_LW
+                raise NotImplementedError(
+                    f"unknown visib_mask loss type: {code_loss_type}"
+                )
+            loss_dict["loss_code"] = (
+                loss_func(binary_code, gt_binary_code) * geometry_net_cfg.CODE_LW
+            )
         # ---- visib_mask loss ----
         if not geometry_net_cfg.FREEZE:
             visib_mask_loss_type = geometry_net_cfg.VISIB_MASK_LOSS_TYPE
@@ -174,9 +238,13 @@ class SymNet(pl.LightningModule):
                 visib_mask = torch.sigmoid(visib_mask)
                 loss_func = nn.L1Loss(reduction="mean")
             else:
-                raise NotImplementedError(f"unknown visib_mask loss type: {visib_mask_loss_type}")
-            loss_dict["loss_visib_mask"] = loss_func(visib_mask[:, 0, :, :],
-                                                     gt_visib_mask) * geometry_net_cfg.VISIB_MASK_LW
+                raise NotImplementedError(
+                    f"unknown visib_mask loss type: {visib_mask_loss_type}"
+                )
+            loss_dict["loss_visib_mask"] = (
+                loss_func(visib_mask[:, 0, :, :], gt_visib_mask)
+                * geometry_net_cfg.VISIB_MASK_LW
+            )
         # ---- amodal_mask loss ----
         if not geometry_net_cfg.FREEZE:
             amodal_mask_loss_type = geometry_net_cfg.AMODAL_MASK_LOSS_TYPE
@@ -186,9 +254,13 @@ class SymNet(pl.LightningModule):
                 amodal_mask = torch.sigmoid(amodal_mask)
                 loss_func = nn.L1Loss(reduction="mean")
             else:
-                raise NotImplementedError(f"unknown amodal_mask loss type: {amodal_mask_loss_type}")
-            loss_dict["loss_amodal_mask"] = loss_func(amodal_mask[:, 0, :, :],
-                                                     gt_amodal_mask) * geometry_net_cfg.AMODAL_MASK_LW
+                raise NotImplementedError(
+                    f"unknown amodal_mask loss type: {amodal_mask_loss_type}"
+                )
+            loss_dict["loss_amodal_mask"] = (
+                loss_func(amodal_mask[:, 0, :, :], gt_amodal_mask)
+                * geometry_net_cfg.AMODAL_MASK_LW
+            )
 
         # ---- point matching loss ----
         if pnp_net_cfg.PM_LW > 0:
@@ -204,7 +276,7 @@ class SymNet(pl.LightningModule):
                 points=points,
                 extents=extents,
                 sym_infos=sym_infos,
-                )
+            )
             if pnp_net_cfg.FREEZE:
                 loss = loss.detach()
             loss_dict["loss_PM_R"] = loss
@@ -238,8 +310,10 @@ class SymNet(pl.LightningModule):
                 loss_func = nn.L1Loss(reduction="mean")
             else:
                 raise NotImplementedError
-            loss = loss_func(R_allo[:, :, self.sym_axis],
-                       gt_allo[:, :, self.sym_axis]) * pnp_net_cfg.R_ALLO_SYM_LW
+            loss = (
+                loss_func(R_allo[:, :, self.sym_axis], gt_allo[:, :, self.sym_axis])
+                * pnp_net_cfg.R_ALLO_SYM_LW
+            )
             if pnp_net_cfg.FREEZE:
                 loss = loss.detach()
             loss_dict["loss_allo_sym"] = loss
@@ -249,64 +323,84 @@ class SymNet(pl.LightningModule):
         self.automatic_optimization = False
         opt_cfg = self.cfg.SOLVER.OPTIMIZER_CFG
         if opt_cfg == "" or opt_cfg is None:
-            raise RuntimeError("please provide cfg.SOLVER.OPTIMIZER_CFG to build optimizer")
+            raise RuntimeError(
+                "please provide cfg.SOLVER.OPTIMIZER_CFG to build optimizer"
+            )
         if opt_cfg.type == "Ranger":
             from lib.torch_utils.solver.ranger import Ranger
-            opt = Ranger([
-                dict(params=self.backbone.parameters(), lr=opt_cfg.lr, ),
-                dict(params=self.geometry_net.parameters(), lr=opt_cfg.lr),
-                dict(params=self.pnp_net.parameters(), lr=opt_cfg.lr)],
+
+            opt = Ranger(
+                [
+                    dict(
+                        params=self.backbone.parameters(),
+                        lr=opt_cfg.lr,
+                    ),
+                    dict(params=self.geometry_net.parameters(), lr=opt_cfg.lr),
+                    dict(params=self.pnp_net.parameters(), lr=opt_cfg.lr),
+                ],
                 weight_decay=opt_cfg.weight_decay,
             )
         elif opt_cfg.type == "Adam":
-            opt = torch.optim.Adam([
-                dict(params=self.backbone.parameters(), lr=opt_cfg.lr),
-                dict(params=self.geometry_net.parameters(), lr=opt_cfg.lr),
-                dict(params=self.pnp_net.parameters(), lr=opt_cfg.lr)
-            ])
+            opt = torch.optim.Adam(
+                [
+                    dict(params=self.backbone.parameters(), lr=opt_cfg.lr),
+                    dict(params=self.geometry_net.parameters(), lr=opt_cfg.lr),
+                    dict(params=self.pnp_net.parameters(), lr=opt_cfg.lr),
+                ]
+            )
         else:
             raise NotImplementedError
 
         sche_cfg = self.cfg.SOLVER.LR_SCHEDULER_CFG
         if sche_cfg == "" or sche_cfg is None:
-            raise RuntimeError("please provide cfg.SOLVER.LR_SCHEDULER_CFG to build scheduler")
+            raise RuntimeError(
+                "please provide cfg.SOLVER.LR_SCHEDULER_CFG to build scheduler"
+            )
         if sche_cfg.type == "LambdaLR":
             self.lr_schedulers_interval = "step"
             sched = dict(
-                scheduler=torch.optim.lr_scheduler.LambdaLR(opt, lambda i: min(1., i / sche_cfg.warm)),
+                scheduler=torch.optim.lr_scheduler.LambdaLR(
+                    opt, lambda i: min(1.0, i / sche_cfg.warm)
+                ),
             )
         elif sche_cfg.type == "CosineAnnealingLR":
             self.lr_schedulers_interval = "epoch"
             sched = dict(
-                scheduler=torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=sche_cfg.T_max, eta_min=sche_cfg.eta_min),
+                scheduler=torch.optim.lr_scheduler.CosineAnnealingLR(
+                    opt, T_max=sche_cfg.T_max, eta_min=sche_cfg.eta_min
+                ),
             )
         elif sche_cfg.type == "MultiStepLR":
             self.lr_schedulers_interval = "epoch"
             sched = dict(
-                scheduler=torch.optim.lr_scheduler.MultiStepLR(opt, milestones=sche_cfg.milestones, gamma=sche_cfg.gamma),
+                scheduler=torch.optim.lr_scheduler.MultiStepLR(
+                    opt, milestones=sche_cfg.milestones, gamma=sche_cfg.gamma
+                ),
             )
         else:
             raise NotImplementedError
         return [opt], [sched]
 
     def training_step(self, batch, batch_nb):
-        loss_dict = self.step(x=batch['rgb_crop'],
-                              K=batch["K_crop"],
-                              AABB=batch["AABB_crop"],
-                              obj_idx=batch["obj_idx"],
-                              gt_visib_mask=batch["mask_visib_crop"],
-                              gt_amodal_mask=batch["mask_crop"],
-                              gt_binary_code=batch["code_crop"],
-                              gt_R=batch["cam_R_obj"],
-                              gt_t=batch["cam_t_obj"],
-                              gt_SITE=batch["SITE"],
-                              gt_allo_rot6d=batch["allo_rot6d"],
-                              gt_allo=batch["allo_rot"],
-                              points=batch["points"],
-                              extents=batch["extent"],
-                              sym_infos=batch["sym_info"],
-                              do_loss=True,
-                              do_output=False)
+        loss_dict = self.step(
+            x=batch["rgb_crop"],
+            K=batch["K_crop"],
+            AABB=batch["AABB_crop"],
+            obj_idx=batch["obj_idx"],
+            gt_visib_mask=batch["mask_visib_crop"],
+            gt_amodal_mask=batch["mask_crop"],
+            gt_binary_code=batch["code_crop"],
+            gt_R=batch["cam_R_obj"],
+            gt_t=batch["cam_t_obj"],
+            gt_SITE=batch["SITE"],
+            gt_allo_rot6d=batch["allo_rot6d"],
+            gt_allo=batch["allo_rot"],
+            points=batch["points"],
+            extents=batch["extent"],
+            sym_infos=batch["sym_info"],
+            do_loss=True,
+            do_output=False,
+        )
         losses = sum(loss_dict.values())
         assert torch.isfinite(losses).all(), loss_dict
         self.manual_backward(losses)
@@ -315,11 +409,15 @@ class SymNet(pl.LightningModule):
         optimizer.zero_grad()
         if self.lr_schedulers_interval == "step":
             self.lr_schedulers().step()
-        self.log(f'train/total_loss', losses)
-        losses_eval = loss_dict["loss_PM_R"] + loss_dict["loss_site_xy"] + loss_dict["loss_site_z"]
-        self.log(f'train/eval_loss', losses_eval, sync_dist=True)
+        self.log(f"train/total_loss", losses)
+        losses_eval = (
+            loss_dict["loss_PM_R"]
+            + loss_dict["loss_site_xy"]
+            + loss_dict["loss_site_z"]
+        )
+        self.log(f"train/eval_loss", losses_eval, sync_dist=True)
         for k, v in loss_dict.items():
-            self.log(f'train/{k}', v)
+            self.log(f"train/{k}", v)
         return losses
 
     def training_epoch_end(self, outputs):
@@ -329,29 +427,35 @@ class SymNet(pl.LightningModule):
             self.cfg.MODEL.PNP_NET.FREEZE = False
 
     def validation_step(self, batch, batch_nb):
-        loss_dict = self.step(x=batch['rgb_crop'],
-                              K=batch["K_crop"],
-                              AABB=batch["AABB_crop"],
-                              obj_idx=batch["obj_idx"],
-                              gt_visib_mask=batch["mask_visib_crop"],
-                              gt_amodal_mask=batch["mask_crop"],
-                              gt_binary_code=batch["code_crop"],
-                              gt_R=batch["cam_R_obj"],
-                              gt_t=batch["cam_t_obj"],
-                              gt_SITE=batch["SITE"],
-                              gt_allo_rot6d=batch["allo_rot6d"],
-                              gt_allo=batch["allo_rot"],
-                              points=batch["points"],
-                              extents=batch["extent"],
-                              sym_infos=batch["sym_info"],
-                              do_loss=True,
-                              do_output=False)
+        loss_dict = self.step(
+            x=batch["rgb_crop"],
+            K=batch["K_crop"],
+            AABB=batch["AABB_crop"],
+            obj_idx=batch["obj_idx"],
+            gt_visib_mask=batch["mask_visib_crop"],
+            gt_amodal_mask=batch["mask_crop"],
+            gt_binary_code=batch["code_crop"],
+            gt_R=batch["cam_R_obj"],
+            gt_t=batch["cam_t_obj"],
+            gt_SITE=batch["SITE"],
+            gt_allo_rot6d=batch["allo_rot6d"],
+            gt_allo=batch["allo_rot"],
+            points=batch["points"],
+            extents=batch["extent"],
+            sym_infos=batch["sym_info"],
+            do_loss=True,
+            do_output=False,
+        )
         losses = sum(loss_dict.values())
-        self.log(f'valid/total_loss', losses, sync_dist=True)
-        losses_eval = loss_dict["loss_PM_R"] + loss_dict["loss_site_xy"] + loss_dict["loss_site_z"]
-        self.log(f'valid/eval_loss', losses_eval, sync_dist=True)
+        self.log(f"valid/total_loss", losses, sync_dist=True)
+        losses_eval = (
+            loss_dict["loss_PM_R"]
+            + loss_dict["loss_site_xy"]
+            + loss_dict["loss_site_z"]
+        )
+        self.log(f"valid/eval_loss", losses_eval, sync_dist=True)
         for k, v in loss_dict.items():
-            self.log(f'valid/{k}', v, sync_dist=True)
+            self.log(f"valid/{k}", v, sync_dist=True)
         return losses
 
     @torch.no_grad()
@@ -371,20 +475,38 @@ def build_model(cfg):
         block_type, layers, channels, name = resnet_spec[backbone_cfg.NUM_LAYERS]
         if "aspp" in geometry_net_cfg.ARCH:
             backbone_net = ResNetBackboneNetForASPP(
-                block_type, layers, backbone_cfg.INPUT_CHANNEL, freeze=backbone_cfg.FREEZE, concat=backbone_cfg.CONCAT
+                block_type,
+                layers,
+                backbone_cfg.INPUT_CHANNEL,
+                freeze=backbone_cfg.FREEZE,
+                concat=backbone_cfg.CONCAT,
             )
         elif "cdpn" in geometry_net_cfg.ARCH:
             backbone_net = ResNetBackboneNetForCDPN(
-                block_type, layers, backbone_cfg.INPUT_CHANNEL, freeze=backbone_cfg.FREEZE, concat=backbone_cfg.CONCAT
+                block_type,
+                layers,
+                backbone_cfg.INPUT_CHANNEL,
+                freeze=backbone_cfg.FREEZE,
+                concat=backbone_cfg.CONCAT,
             )
     # ---- build geometry net ----
     # input: [bsz, 512, 8, 8], [bsz, 256, 16, 16], [bsz, 128, 32, 32], [bsz, 64, 64, 64] for geo_net_cdpn
     #        [bsz, 512, 32, 32], [bsz, 64, 64, 64], [bsz, 64, 128, 128] for geo_net_aspp
     # output: visib_mask[bsz, n_class, 128, 128], binary_code[bsz, n_class * bit, 128, 128]
     if "aspp" in geometry_net_cfg.ARCH:
-        geometry_net = ASPPGeoNet(cfg, channels[-1], num_classes=cfg.DATASETS.NUM_CLASSES, bit = geometry_net_cfg.CODE_BIT)
+        geometry_net = ASPPGeoNet(
+            cfg,
+            channels[-1],
+            num_classes=cfg.DATASETS.NUM_CLASSES,
+            bit=geometry_net_cfg.CODE_BIT,
+        )
     elif "cdpn" in geometry_net_cfg.ARCH:
-        geometry_net = CDPNGeoNet(cfg, channels[-1], num_classes=cfg.DATASETS.NUM_CLASSES, bit = geometry_net_cfg.CODE_BIT)
+        geometry_net = CDPNGeoNet(
+            cfg,
+            channels[-1],
+            num_classes=cfg.DATASETS.NUM_CLASSES,
+            bit=geometry_net_cfg.CODE_BIT,
+        )
     else:
         raise NotImplementedError
     # ---- build pnp net ----
@@ -399,7 +521,8 @@ def build_model(cfg):
     # ---- build model ----
     model = SymNet(cfg, backbone_net, geometry_net, pnp_net)
     if cfg.RESUME is None:
-        from mmcv.runner import load_checkpoint
+        from mmengine.runner import load_checkpoint
+
         backbone_pretrained = cfg.MODEL.BACKBONE.get("PRETRAINED", "")
         load_checkpoint(model.backbone, backbone_pretrained, strict=False)
 

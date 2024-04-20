@@ -58,12 +58,13 @@ SOLVER = dict(
 
 DATASETS = dict(
     NAME="icbin",
-    TRAIN=("train_pbr",),  # tuple, which is the subset of ("pbr", "real",)
+    TRAIN=("train_pbr", "train"),  # tuple, which is the subset of ("pbr", "real",)
     TEST=("test",),
     TEST_KEYFRAME="test_targets_bop19.json",  # choose from [None, "test_targets_bop19.json",
                                               #              "ycbv_test_targets_keyframe.json"]
-    TEST_DETECTION_TYPE="type1",  # choose from ["type1" for yolox, "type2" for maskrcnn, "type3"]
-    TEST_DETECTION_PATH='detections/gdrnppdet-pbr/gdrnppdet-pbr_icbin-test_80434807-4692-4227-90bb-70212f3e8e66.json',
+    CODE_TYPE="SymCode",  # choose from ["ZebraCode", "SymCode"]
+    TEST_DETECTION_TYPE="type2",  # choose from ["type1" for yolox, "type2" for maskrcnn, "type3"]
+    TEST_DETECTION_PATH='detections/gdrnppdet-pbrreal/gdrnppdet-pbrreal_icbin-test_a46668ed-f76b-40ca-9954-708b198c2ab0.json',
     TEST_SCORE_THR=0.01,  # used in test datasets
     TRAIN_CROP=[1.2, 1.5],  # TRAIN_CROP is used when detections not available
     TEST_CROP=[1.3, 1.3],  # TEST_CROP is used when detections avaliable
@@ -79,9 +80,9 @@ DATASETS = dict(
 
 TRAIN = dict(
     PRINT_FREQ=10,
-    NUM_WORKERS=2,
+    NUM_WORKERS=6,
     BATCH_SIZE=32,  # BATCH_SIZE for one gpu
-    TOTAL_EPOCHS=600,
+    TOTAL_EPOCHS=60,
     DEBUG_MODE=False,  # visualize some images during training and more out_dict
 )
 
