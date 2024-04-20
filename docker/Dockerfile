@@ -30,6 +30,8 @@ WORKDIR /home
 RUN git clone https://github.com/lyltc1/SymNet.git && \
     cd SymNet && \
     git checkout -b mmcv2 origin/mmcv2
+WORKDIR /home/SymNet/bop_toolkit
+RUN pip install -e .
     
 # Clean everything
 RUN pip config unset global.index-url
