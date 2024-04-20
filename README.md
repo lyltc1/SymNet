@@ -18,7 +18,7 @@ Download `tless/train_pbr_GT.zip`, `tless/test_primesense_bop_GT.zip` and `tless
 
 4. Download pretrained_backbone from [`owncloud`](https://cloud.dfki.de/owncloud/index.php/s/zT7z7c3e666mJTW), note the path should be modified.
 
-The structure of this project should look like below after using soft links:
+The structure of this project should look like below after using soft links, the procjet inside docker should looks like:
 ```
 # recommend using soft links (ln -sf)
 Symnet
