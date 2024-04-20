@@ -64,91 +64,35 @@ Symnet
 └── ...
 ```
 
-
-<!-- 
-
-## Training symnet
-`python core/symn/run_train.py <config_path> <gpu_ids> <obj_id>(other args)`
-
-Example:
-
+## Training
+Specify the config-file and the object need to be trained, also the gpus to be used if needed.
 Train in one gpu：
-```
+```python
+# train tless-obj01 in one gpu
 python core/symn/run_train.py --config-file configs/symn/tless/symn_tless_config.py --obj_id 4
 ```
 Train in mulit-gpu：
-```
-python core/symn/run_train.py --config-file configs/symn/tless/symn_tless_config.py --gpus 0 1 2 3 4 5 --obj_id 4
+```python
+# train tless-obj04 in six gpus
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5 python core/symn/run_train.py --config-file configs/symn/tless/symn_tless_config.py --gpus 0 1 2 3 4 5 --obj_id 4
+# train ycbv-obj01 in eight gpus, train 10bits SymCode in pbr setting
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python core/symn/run_train.py --config-file configs/symn/ycbv/symn_ycbv_config_bit10_pbr.py --gpus 0 1 2 3 4 5 6 7 --obj_id 1
-
 ```
-Train in debug mode (smaller batch size set in code):
-```
-python core/symn/run_train.py --config-file configs/symn/tless/symn_tless_config.py --obj_id 4 --debug True
+Some more args explained:
+```python
+--debug True  # Train in smaller batch size set in code
 ```
 
 ## Evaluation
-`python core/symn/run_evaluate.py <eval_folder> --debug (other args)`
-
-Example:
+the output of training is a fold with time saved in `SymNet/output/`
+```python
+python core/symn/run_evaluate.py --eval_folder output/SymNet_tless_obj4_20221225_171440
 ```
-python core/symn/run_evaluate.py --eval_folder output/SymNet_tless_obj4_20221225_171440 --debug
-```
-## Docker
-
-### 1.get docker image 
-
-option1: (easiest) download docker images from [docker](docker.com).
-```
-docker pull lyltc1/env:cuda116-torch112-detectron2-bop-0.0.6
-```
-option2: (no tested) build image locally.
-```
-cd docker
-docker build -t lyltc1/env:cuda116-torch112-detectron2-bop-0.0.6 .
-```
-### 2.run docker
-In local mechine, prepare a folder ```dataset``` which contains all the data needed, include ```pbr``` which contains datasets like ```tless```,```ycbv``` from BOP, ```pretrained_backone```, ```binary_code```, ```VOCdevkit```. These folders need to be set soft links inside docker.
-```
-docker run -it --runtime=nvidia -e NVIDIA_DRIVER_CAPABILITIES=all --gpus all -p 8025:22 --shm-size 12G --device=/dev/dri --group-add video --volume=/tmp/.X11-unix:/tmp/.X11-unix --env="DISPLAY=$DISPLAY" --env="QT_X11_NO_MITSHM=1" --name symnet1 -v /home/lyl/dataset/:/home/dataset:ro -v /home/lyl/git/SymNet/:/home/Symnet:rw symnet:1.0.0 /bin/bash
-```
-Note:The docker doesn't contain the code of Symnet, I use -v, you can also use git clone to download the code to docker:/home/Symnet.
-
-If you have container stopped, run
-```
-docker exec -it CONTAINER_ID /bin/bash
+More args explained:
+```python
 ```
 
-Inside the container, check the volumes.
-```
-root@f6093b96bdc3:/home# ls /home
-Symnet  dataset
-root@f6093b96bdc3:/home# ls /home/Symnet
-LICENSE  README.md  assets  configs  core  deprecated  docker  lib  ref  requirements.txt  scripts  tools
-root@f6093b96bdc3:/home# ls /home/dataset
-VOCdevkit  pbr  pretrained_backbone  symnet
-root@f6093b96bdc3:/home# ls /home/dataset/symnet
-binary_code  models_GT_color
-```
-### 3. soft link
-```
-mkdir output
-mkdir /home/Symnet/datasets
-mkdir /home/Symnet/datasets/BOP_DATASETS
-ln -s /home/dataset/pbr/ycbv/ /home/Symnet/datasets/BOP_DATASETS/
-ln -s /home/dataset/pbr/tless/ /home/Symnet/datasets/BOP_DATASETS/
-ln -s /home/dataset/symnet/binary_code/ /home/Symnet/datasets/.
-ln -s /home/dataset/symnet/models_GT_color/ /home/Symnet/datasets/.
-ln -s /home/dataset/symnet/detections/ /home/Symnet/datasets/.
-ln -s /home/dataset/VOCdevkit/ /home/Symnet/datasets/.
-ln -s /home/dataset/pretrained_backbone/ /home/Symnet/
-mkdir pretrained_backbone
-ln -s /home/dataset/pretrained_backbone/resnet/resnet34-333f7ec4.pth /home/Symnet/pretrained_backbone/
-```
-
-### 4. modify ```MetaInfo.py```
-all path of datasets is defined in core/symn/MetaInfo.py, check it or change it.
-```
+<!-- 
 # untrack the file if modified locally
 git update-index --assume-unchanged "core/symn/MetaInfo.py"
 ``` -->

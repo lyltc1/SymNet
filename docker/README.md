@@ -100,6 +100,8 @@ ln -s /home/dataset/zebrapose/zebrapose_code/tless/ /home/SymNet/datasets/zebrap
 ```
 ln -s /home/dataset/symnet/binary_code/tless/ /home/SymNet/datasets/symnet_code/
 ```
+7. All the above path is defined in ```core/symn/MetaInfo.py```. If there exists some path error, check it or change it.
+
 
 ## SoftLink for another dataset (not needed for Sandeep)
 Use icbin as an example:
@@ -115,4 +117,11 @@ ln -s /home/dataset/symnet/binary_code/icbin/ /home/SymNet/datasets/symnet_code/
 3. (optional)link zebrapose_code (not needed for Sandeep)
 ```
 ln -s /home/dataset/zebrapose/zebrapose_code/icbin/ /home/SymNet/datasets/zebrapose_code/
+```
+
+
+# Usage of Docker
+If you have container stopped, run
+```
+docker exec -it CONTAINER_ID /bin/bash
 ```
