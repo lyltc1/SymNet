@@ -118,10 +118,3 @@ ln -s /home/dataset/symnet/binary_code/icbin/ /home/SymNet/datasets/symnet_code/
 ```
 ln -s /home/dataset/zebrapose/zebrapose_code/icbin/ /home/SymNet/datasets/zebrapose_code/
 ```
-
-
-# Usage of Docker
-If you have container stopped, run
-```
-docker exec -it CONTAINER_ID /bin/bash
-```
