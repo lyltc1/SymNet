@@ -121,10 +121,12 @@ ln -s /home/dataset/zebrapose/zebrapose_code/icbin/ /home/SymNet/datasets/zebrap
 
 ## Problems and Solve
 1. python can not be found
-```
+```shell
 conda init
 ```
-1. cannot import cv2
-```
+2. cannot import cv2
+```shell
+pip install opencv-python-headless
+# or
 /opt/conda/bin/python -m pip install opencv-python-headless
 ```
