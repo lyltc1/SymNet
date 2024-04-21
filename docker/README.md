@@ -130,3 +130,11 @@ pip install opencv-python-headless
 # or
 /opt/conda/bin/python -m pip install opencv-python-headless
 ```
+## For sandeep
+The experiments is using ZebraCode while with the SymNet architecture.
+
+The experiments can be run by following command:
+```
+# --obj_id can be replaced from --obj_id 1 to --obj_id 30
+python core/symn/run_train.py --config-file configs/symn/symn_tless_config_pbr_bit16_ZebraCode.py --obj_id xxx
+```
