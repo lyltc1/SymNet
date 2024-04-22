@@ -33,9 +33,11 @@ RUN git clone https://github.com/lyltc1/SymNet.git && \
 WORKDIR /home/SymNet/bop_toolkit
 RUN pip install -e .
     
-# Clean everything
+# mirrors
 RUN pip config unset global.index-url
 RUN mv /etc/apt/sources.list.bak /etc/apt/sources.list
+
+# Clean everything
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
 WORKDIR /home/SymNet
