@@ -11,7 +11,7 @@ Setting up the environment can be tedious, so we've provided a [Dockerfile](./do
 ### Pull or Build 
 Option1: Just pull the whole image from DockerHub.
 ```bash
-docker pull lyltc1/SymNet:mmcv2
+docker pull lyltc1/symnet:mmcv2
 ```
 Option2: Build the image by yourself.
 Note: There are some mirror settings which need to be adapted. The default setting is for usage in China. Just remove the mirror setting if needed.
