@@ -6,7 +6,7 @@ This repo provides the PyTorch implementation of our SymNet work:
 - CUDA >= 11.1
 - torch >= 1.13.1 and torchvision >= 0.14.1
 
-Setting up the environment can be tedious, so we've provided a [Dockerfile](./docker/Dockerfile) to simplify the process. 
+Setting up the environment can be tedious, so we've provided a [Dockerfile](./docker/Dockerfile) to simplify the process. The images contains the code already.
 
 ### Pull or Build 
 Option1: Just pull the whole image from DockerHub.
@@ -59,41 +59,6 @@ git pull
 ```
 
 ## Prepare Datasets
-Datasets should be prepared in ```path/to/dataset/```, so that it can be found in container. 
-
-For me, ```path/to/dataset/``` is ```/home/lyl/dataset/```, the structure of dataset, aftar decompression:
-```
-/home/lyl/dataset/
-    ├── pbr
-        ├── tless
-            ├── models
-            ├── train_pbr
-            ├── test_primesense
-            ├── test_targets_bop19.json
-    ├── VOCdevkit
-        ├── VOC2012/
-            ├── JPEGImages/
-            ├── SegmentationClass/
-            ├── SegmentationObject/
-    ├── zebrapose
-        ├── zebrapose_code/
-            ├── tless
-                ├── train_pbr_GT
-                ├── train_primesense_GT
-                ├── test_primesense_GT
-    ├── symnet
-        ├── detections
-            ├── gdrnppdet-pbr/
-                ├── gdrnppdet-pbr_tless-test_bed8...json
-            ├── gdrnppdet-pbrreal/
-            ├── zebrapose_detections/
-                ├── tless
-                    ├── tless_bop_pbr_only.json
-    ├── pretrained_backbone
-        ├──resnet
-            ├──resnet34-333f7ec4.pth
-```
-
 1. Download the dataset TLESS from the [BOP benchmark](https://bop.felk.cvut.cz/datasets/). 
 
 2. Download [VOC 2012 Train/Validation Data(1.9GB)](https://pjreddie.com/projects/pascal-voc-dataset-mirror/) for background images.
@@ -151,51 +116,6 @@ The structure of this project should look like below after using soft links, the
 └── ...
 ```
 
-Here are some command to make the softlink to the project ```/home/SymNet/```
-1. link pretrained_backbone
-```
-ln -s /home/dataset/pretrained_backbone/resnet/resnet34-333f7ec4.pth \
-/home/SymNet/pretrained_backbone/
-```
-2. link bop dataset
-```
-ln -s /home/dataset/pbr/tless/ /home/SymNet/datasets/BOP_DATASETS/
-``` 
-3. link detections
-```
-ln -s /home/dataset/symnet/detections/* /home/SymNet/datasets/detections/
-```
-4. link VOC
-```
-ln -s /home/dataset/VOCdevkit/* /home/SymNet/datasets/VOCdevkit/
-```
-5. link zebrapose_code
-```
-ln -s /home/dataset/zebrapose/zebrapose_code/tless/ /home/SymNet/datasets/zebrapose_code/
-```
-6. link symnet_code (not needed for Sandeep)
-```
-ln -s /home/dataset/symnet/binary_code/tless/ /home/SymNet/datasets/symnet_code/
-```
-7. All the above path is defined in ```core/symn/MetaInfo.py```. If there exists some path error, check it or change it.
-
-
-#### SoftLink for another dataset (not needed for Sandeep)
-Use icbin as an example:
-
-1. link bop dataset (not needed for Sandeep)
-```
-ln -s /home/dataset/pbr/icbin/ /home/SymNet/datasets/BOP_DATASETS/
-``` 
-2. link symnet_code (not needed for Sandeep)
-```
-ln -s /home/dataset/symnet/binary_code/icbin/ /home/SymNet/datasets/symnet_code/
-```
-3. (optional)link zebrapose_code (not needed for Sandeep)
-```
-ln -s /home/dataset/zebrapose/zebrapose_code/icbin/ /home/SymNet/datasets/zebrapose_code/
-```
-
 ## Training
 ### Training For sandeep
 The experiments is using ZebraCode while with the SymNet architecture, 
@@ -249,3 +169,83 @@ pip install opencv-python-headless
 # or
 /opt/conda/bin/python -m pip install opencv-python-headless
 ```
+
+<!-- Datasets should be prepared in ```path/to/dataset/```, so that it can be found in container. 
+
+For me, ```path/to/dataset/``` is ```/home/lyl/dataset/```, the structure of dataset, aftar decompression:
+```
+/home/lyl/dataset/
+    ├── pbr
+        ├── tless
+            ├── models
+            ├── train_pbr
+            ├── test_primesense
+            ├── test_targets_bop19.json
+    ├── VOCdevkit
+        ├── VOC2012/
+            ├── JPEGImages/
+            ├── SegmentationClass/
+            ├── SegmentationObject/
+    ├── zebrapose
+        ├── zebrapose_code/
+            ├── tless
+                ├── train_pbr_GT
+                ├── train_primesense_GT
+                ├── test_primesense_GT
+    ├── symnet
+        ├── detections
+            ├── gdrnppdet-pbr/
+                ├── gdrnppdet-pbr_tless-test_bed8...json
+            ├── gdrnppdet-pbrreal/
+            ├── zebrapose_detections/
+                ├── tless
+                    ├── tless_bop_pbr_only.json
+    ├── pretrained_backbone
+        ├──resnet
+            ├──resnet34-333f7ec4.pth
+``` -->
+<!-- Here are some command to make the softlink to the project ```/home/SymNet/```
+1. link pretrained_backbone
+```
+ln -s /home/dataset/pretrained_backbone/resnet/resnet34-333f7ec4.pth \
+/home/SymNet/pretrained_backbone/
+```
+2. link bop dataset
+```
+ln -s /home/dataset/pbr/tless/ /home/SymNet/datasets/BOP_DATASETS/
+``` 
+3. link detections
+```
+ln -s /home/dataset/symnet/detections/* /home/SymNet/datasets/detections/
+```
+4. link VOC
+```
+ln -s /home/dataset/VOCdevkit/* /home/SymNet/datasets/VOCdevkit/
+```
+5. link zebrapose_code
+```
+ln -s /home/dataset/zebrapose/zebrapose_code/tless/ /home/SymNet/datasets/zebrapose_code/
+```
+6. link symnet_code (not needed for Sandeep)
+```
+ln -s /home/dataset/symnet/binary_code/tless/ /home/SymNet/datasets/symnet_code/
+```
+7. All the above path is defined in ```core/symn/MetaInfo.py```. If there exists some path error, check it or change it.
+
+
+#### SoftLink for another dataset (not needed for Sandeep)
+Use icbin as an example:
+
+1. link bop dataset (not needed for Sandeep)
+```
+ln -s /home/dataset/pbr/icbin/ /home/SymNet/datasets/BOP_DATASETS/
+``` 
+2. link symnet_code (not needed for Sandeep)
+```
+ln -s /home/dataset/symnet/binary_code/icbin/ /home/SymNet/datasets/symnet_code/
+```
+3. (optional)link zebrapose_code (not needed for Sandeep)
+```
+ln -s /home/dataset/zebrapose/zebrapose_code/icbin/ /home/SymNet/datasets/zebrapose_code/
+``` -->
+
