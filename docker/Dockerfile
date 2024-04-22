@@ -5,7 +5,7 @@ ARG CUDNN="8"
 FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-runtime
 
 
-# mirrors
+# mirrors, search for two places of `mirrors` and command out if you don't stay in China.
 RUN mv /etc/apt/sources.list /etc/apt/sources.list.bak && \
     echo "deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic main restricted universe multiverse" >> /etc/apt/sources.list && \
     echo "deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-updates main restricted universe multiverse" >>/etc/apt/sources.list && \
