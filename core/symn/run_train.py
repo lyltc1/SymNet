@@ -21,7 +21,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks.progress import TQDMProgressBar
 from pytorch_lightning.loggers import TensorBoardLogger
 from lib.utils.time_utils import get_time_str
-from core.symn.datasets.BOPDataset_utils import build_BOP_train_dataset, batch_data_train
+from core.symn.datasets.BOPDataset_utils import build_BOP_train_dataset, batch_data_train, build_BOP_test_dataset
 from core.symn.models.SymNetLightning import build_model
 from core.symn.MetaInfo import MetaInfo
 
@@ -82,7 +82,8 @@ def main():
 
     # datasets
     data_train = build_BOP_train_dataset(cfg, cfg.DATASETS.TRAIN, args.debug)
-    data_valid = build_BOP_train_dataset(cfg, cfg.DATASETS.TEST, args.debug)
+    cfg.DATASETS.TEST_DETECTION_PATH = None
+    data_valid = build_BOP_test_dataset(cfg, cfg.DATASETS.TEST, args.debug)
     if args.small_dataset:
         data_train, _ = torch.utils.data.random_split(
             data_train, (128, len(data_train) - 128),

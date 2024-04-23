@@ -228,7 +228,7 @@ def build_BOP_test_dataset(cfg, dataset_type, debug=False):
     else:
         dataset = None
     for folder_name in dataset_type:
-        if folder_name == "test" or "test_primesense":
+        if folder_name in ["test", "test_primesense"]:
             use_detection = True if cfg.DATASETS.TEST_DETECTION_PATH else False
             auxs_test = get_aux(
                 cfg,
@@ -237,7 +237,13 @@ def build_BOP_test_dataset(cfg, dataset_type, debug=False):
                 aug_bg=False,
                 aug_rgb=False,
                 debug=debug,
-            )
+            ) if use_detection else get_aux(
+                cfg, 
+                gt=True, 
+                aug_occ=False, 
+                aug_bg=False, 
+                aug_rgb=False, 
+                debug=debug)
             # ---- get detections ----
             detections = None
             if use_detection:

@@ -169,7 +169,6 @@ pip install opencv-python-headless
 # or
 /opt/conda/bin/python -m pip install opencv-python-headless
 ```
-<<<<<<< HEAD
 
 <!-- Datasets should be prepared in ```path/to/dataset/```, so that it can be found in container. 
 
@@ -250,5 +249,3 @@ ln -s /home/dataset/symnet/binary_code/icbin/ /home/SymNet/datasets/symnet_code/
 ln -s /home/dataset/zebrapose/zebrapose_code/icbin/ /home/SymNet/datasets/zebrapose_code/
 ``` -->
 
-=======
->>>>>>> 283b2b4a93255c2c79e6ca66f5009e607c218737
