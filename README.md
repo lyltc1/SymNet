@@ -11,7 +11,7 @@ Setting up the environment can be tedious, so we've provided a [Dockerfile](./do
 ### Pull or Build 
 Option1: Just pull the whole image from DockerHub.
 ```bash
-docker pull lyltc1/SymNet:mmcv2
+docker pull lyltc1/symnet:mmcv2
 ```
 Option2: Build the image by yourself.
 Note: There are some mirror settings which need to be adapted. The default setting is for usage in China. Just remove the mirror setting if needed.
@@ -169,6 +169,7 @@ pip install opencv-python-headless
 # or
 /opt/conda/bin/python -m pip install opencv-python-headless
 ```
+<<<<<<< HEAD
 
 <!-- Datasets should be prepared in ```path/to/dataset/```, so that it can be found in container. 
 
@@ -249,3 +250,5 @@ ln -s /home/dataset/symnet/binary_code/icbin/ /home/SymNet/datasets/symnet_code/
 ln -s /home/dataset/zebrapose/zebrapose_code/icbin/ /home/SymNet/datasets/zebrapose_code/
 ``` -->
 
+=======
+>>>>>>> 283b2b4a93255c2c79e6ca66f5009e607c218737
