@@ -169,7 +169,6 @@ pip install opencv-python-headless
 # or
 /opt/conda/bin/python -m pip install opencv-python-headless
 ```
-<<<<<<< HEAD
 
 <!-- Datasets should be prepared in ```path/to/dataset/```, so that it can be found in container. 
 
