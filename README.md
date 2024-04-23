@@ -161,7 +161,7 @@ More args explained:
 ## Problems and Solve
 1. python can not be found
 ```shell
-conda init
+/opt/conda/bin/conda init
 ```
 2. cannot import cv2
 ```shell
@@ -248,4 +248,3 @@ ln -s /home/dataset/symnet/binary_code/icbin/ /home/SymNet/datasets/symnet_code/
 ```
 ln -s /home/dataset/zebrapose/zebrapose_code/icbin/ /home/SymNet/datasets/zebrapose_code/
 ``` -->
-
