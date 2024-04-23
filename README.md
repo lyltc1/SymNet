@@ -161,7 +161,7 @@ More args explained:
 ## Problems and Solve
 1. python can not be found
 ```shell
-conda init
+/opt/conda/bin/conda init
 ```
 2. cannot import cv2
 ```shell
