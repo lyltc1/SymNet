@@ -8,12 +8,12 @@ sys.path.insert(0, os.getcwd())
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(cur_dir, "../"))
 
-folder_path = "output/SymNet_pbr_ZebraCode"
+folder_path = "SymNet_pbr_ZebraCode"
 dir_suffix = "zebracode"
 output_fn = os.path.join(folder_path, "SymNetZebraCodepbr_tless-test.csv")
-RUN_EVALUATE = True
-GENERATE_CSV = True
-EVAL_BOP = True
+RUN_EVALUATE = False
+GENERATE_CSV = False
+EVAL_BOP = False
 
 if RUN_EVALUATE:
     eval_folders = []
