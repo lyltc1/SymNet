@@ -13,12 +13,10 @@ RUN mv /etc/apt/sources.list /etc/apt/sources.list.bak && \
     echo "deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-security main restricted universe multiverse" >>/etc/apt/sources.list && \
     pip config set global.index-url https://mirrors.zju.edu.cn/pypi/web/simple
 
-# git
+# git and EGL
 RUN apt-get update && \
-    apt-get install -y git build-essential unzip
-
-# dependence
-RUN apt-get install -y build-essential unzip
+    apt-get install -y git build-essential unzip && \
+    apt-get install -y mesa-utils libegl1-mesa xvfb fontconfig
 
 RUN pip install scipy kiwisolver==1.3.1 matplotlib imageio pypng Cython==0.29.24 PyOpenGL==3.1.0 triangle>=20190115.2 glumpy Pillow>=8.2.0 vispy>=0.6.5 openmim && \
     mim install "mmcv>=2.0.0rc1" && \
