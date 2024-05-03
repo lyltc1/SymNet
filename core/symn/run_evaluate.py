@@ -15,7 +15,7 @@ from tqdm import tqdm
 import numpy as np
 
 import torch
-from mmcv import Config
+from mmengine import Config
 from bop_toolkit_lib import inout
 
 from core.symn.MetaInfo import MetaInfo
