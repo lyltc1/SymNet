@@ -20,7 +20,7 @@ RUN apt-get update && \
 
 RUN pip install scipy kiwisolver==1.3.1 matplotlib imageio pypng Cython==0.29.24 PyOpenGL==3.1.0 triangle>=20190115.2 glumpy Pillow>=8.2.0 vispy>=0.6.5 openmim && \
     mim install "mmcv>=2.0.0rc1" && \
-    python -m pip install 'git+https://github.com/facebookresearch/detectron2.git@v0.6' && \
+    python -m pip install 'git+https://github.com/facebookresearch/detectron2.git@a59f05630a8f205756064244bf5beb8661f96180' && \
     pip install pytorch-lightning==1.8.4.post0 imgaug moderngl trimesh transforms3d numba opencv-python-headless
 
 # clone the code
@@ -32,11 +32,10 @@ WORKDIR /home/SymNet/bop_toolkit
 RUN pip install -e .
     
 # mirrors
-RUN pip config unset global.index-url
-RUN mv /etc/apt/sources.list.bak /etc/apt/sources.list
+RUN pip config unset global.index-url && \
+    mv /etc/apt/sources.list.bak /etc/apt/sources.list
 
 # Clean everything
-RUN apt-get clean
-RUN rm -rf /var/lib/apt/lists/*
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 WORKDIR /home/SymNet
-
