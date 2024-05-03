@@ -109,7 +109,7 @@ The structure of this project should look like below after using soft links, the
 ```
 
 ## Training
-### Training For sandeep
+### Training For Sandeep
 The experiments is using ZebraCode while with the SymNet architecture, 
 the training is perfromed in one gpu for one object. So need to run 30 times.
 
@@ -122,6 +122,12 @@ like:
 ```
 python core/symn/run_train.py --config-file configs/symn/symn_tless_config_pbr_bit16_ZebraCode.py --obj_id 1
 ```
+
+## Testing For Sandeep
+1. make sure there is a folder `SymNet_pbr_ZebraCode` in the project `./SymNet`, `SymNet_pbr_ZebraCode` contains exactly 30 folders, including `SymNet_tless_obj1_20240423_160730`.
+2. running 
+```python scripts/4_tless_ZebraCode_evaluate_bop.py``` 
+which will generate the result file `SymNetZebraCodepbr_tless-test.csv` and result folder `SymNetZebraCodepbr_tless-test` inside `SymNet_pbr_ZebraCode`.
 
 <!-- Specify the config-file and the object need to be trained, also the gpus to be used if needed.
 Train in one gpu：
@@ -150,17 +156,6 @@ More args explained:
 ```python
 ``` -->
 
-## Problems and Solve
-1. python can not be found
-```shell
-/opt/conda/bin/conda init
-```
-2. cannot import cv2
-```shell
-pip install opencv-python-headless
-# or
-/opt/conda/bin/python -m pip install opencv-python-headless
-```
 
 <!-- Datasets should be prepared in ```path/to/dataset/```, so that it can be found in container. 
 
