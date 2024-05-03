@@ -42,14 +42,6 @@ docker run -it --runtime=nvidia -e NVIDIA_DRIVER_CAPABILITIES=all \
 lyltc1/symnet:mmcv2
 ```
 
-Note: if you have different folders to contain all the data needed,
-you need to specify all when you run docker with ```-v```, like 
-
-```
--v path/to/dataset_part1/:/home/dataset1:ro
--v path/to/dataset_part2/:/home/dataset2:ro
-```
-
 ### UpdateCode
 This is important since the code is under development.
 
