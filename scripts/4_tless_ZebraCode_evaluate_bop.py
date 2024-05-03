@@ -10,10 +10,11 @@ sys.path.insert(0, os.path.join(cur_dir, "../"))
 
 folder_path = "SymNet_pbr_ZebraCode"
 dir_suffix = "zebracode"
-output_fn = os.path.join(folder_path, "SymNetZebraCodepbr_tless-test.csv")
-RUN_EVALUATE = False
-GENERATE_CSV = False
-EVAL_BOP = False
+output_file_name = "SymNetZebraCodepbr_tless-test.csv"
+output_fn = os.path.join(folder_path, output_file_name)
+RUN_EVALUATE = True
+GENERATE_CSV = True
+EVAL_BOP = True
 
 if RUN_EVALUATE:
     eval_folders = []
@@ -46,6 +47,6 @@ if GENERATE_CSV:
     combined_csv.to_csv(output_fn, index=False, encoding="utf-8-sig")
 
 if EVAL_BOP:
-    command = f"python bop_toolkit/scripts/eval_bop19_pose.py --result_filenames {output_fn} --results_path {os.path.abspath(folder_path)} --eval_path {os.path.abspath(folder_path)}"
+    command = f"python bop_toolkit/scripts/eval_bop19_pose.py --result_filenames {output_file_name} --results_path {os.path.abspath(folder_path)} --eval_path {os.path.abspath(folder_path)}"
     print(command)
     os.system(command)
