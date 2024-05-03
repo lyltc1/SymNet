@@ -39,3 +39,4 @@ RUN pip config unset global.index-url && \
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 WORKDIR /home/SymNet
+
