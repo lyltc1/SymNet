@@ -3,7 +3,7 @@ from typing import Union
 from os.path import join
 import numpy as np
 import cv2
-import mmcv
+import mmengine
 import torch
 
 
@@ -98,7 +98,7 @@ def visualize_v2(inputs, out_dir, out_dict=None, renderer=None, sub_file=None):
     """
     if sub_file is not None:
         out_dir = join(out_dir, str(sub_file))
-    mmcv.mkdir_or_exist(out_dir)
+    mmengine.mkdir_or_exist(out_dir)
 
     scene_id = inputs['scene_id'][0]
     img_id = inputs['img_id'][0]

@@ -30,7 +30,7 @@ RUN git clone https://github.com/lyltc1/SymNet.git && \
     git checkout -b mmcv2 origin/mmcv2
 WORKDIR /home/SymNet/bop_toolkit
 RUN pip install -e .
-    
+
 # mirrors
 RUN pip config unset global.index-url && \
     mv /etc/apt/sources.list.bak /etc/apt/sources.list
@@ -39,4 +39,3 @@ RUN pip config unset global.index-url && \
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 WORKDIR /home/SymNet
-

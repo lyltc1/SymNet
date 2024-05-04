@@ -216,7 +216,7 @@ def build_BOP_train_dataset(cfg, dataset_type, debug=False):
     return dataset
 
 
-def build_BOP_test_dataset(cfg, dataset_type, debug=False):
+def build_BOP_test_dataset(cfg, dataset_type, gt=False, debug=False):
     """build dataset in cfg.DATASETS.TEST"""
     meta_info = MetaInfo(cfg.DATASETS.NAME)
     obj_ids = cfg.DATASETS.OBJ_IDS
@@ -232,14 +232,14 @@ def build_BOP_test_dataset(cfg, dataset_type, debug=False):
             use_detection = True if cfg.DATASETS.TEST_DETECTION_PATH else False
             auxs_test = get_aux(
                 cfg,
-                gt=False,
+                gt=gt,
                 detection=use_detection,
                 aug_bg=False,
                 aug_rgb=False,
                 debug=debug,
             ) if use_detection else get_aux(
                 cfg, 
-                gt=True, 
+                gt=gt, 
                 aug_occ=False, 
                 aug_bg=False, 
                 aug_rgb=False, 

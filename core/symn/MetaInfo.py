@@ -16,7 +16,6 @@ models_GT_color_folder = join(data_folder, "models_GT_color")
 symnet_code_folder = join(data_folder, "symnet_code")
 zebrapose_code_folder = join(data_folder, "zebrapose_code")
 
-
 class MetaInfo:
     def __init__(self, name, model_type=None):
         # dataset related info
@@ -35,3 +34,4 @@ class MetaInfo:
         # self.binary_code_folder = join(binary_code_folder, name)
         self.zebrapose_code_folder = join(zebrapose_code_folder, name)
         self.symnet_code_folder = join(symnet_code_folder, name)
+

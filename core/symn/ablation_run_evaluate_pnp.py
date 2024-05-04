@@ -21,15 +21,15 @@ from bop_toolkit_lib import inout
 from core.symn.MetaInfo import MetaInfo
 from core.symn.datasets.BOPDataset_utils import build_BOP_test_dataset, batch_data_test
 from core.symn.models.SymNetLightning import build_model
-from lib.utils.time_utils import get_time_str, add_timing_to_list
+from lib.utils.time_utils import add_timing_to_list
 from core.symn.utils.visualize_utils import visualize_v2
 from core.symn.utils.renderer import ObjCoordRenderer
 from core.symn.utils.obj import load_objs
 
+from utils.pose_optimization import pose_pnp
 
-def write_cvs(
-    evaluation_result_path, file_name_prefix, predictions, bop_eval, bop_visualize
-):
+
+def write_cvs(evaluation_result_path, file_name_prefix, predictions):
     if not os.path.exists(evaluation_result_path):
         os.makedirs(evaluation_result_path)
     for obj_id, predict_list in predictions.items():
@@ -92,20 +92,6 @@ def write_cvs(
                 f.write(",")
                 # time
                 f.write(f"{str(time)}\n")
-        if bop_eval:
-            os.system(
-                "python bop_toolkit/scripts/eval_bop19_pose.py "
-                + f"--result_filenames {os.path.abspath(filename)} "
-                + f"--results_path {os.path.abspath(evaluation_result_path)} "
-                + f"--eval_path {os.path.abspath(evaluation_result_path)}"
-            )
-        if bop_visualize:
-            os.system(
-                "python bop_toolkit/scripts/vis_est_poses.py "
-                + f"--result_filenames {os.path.abspath(filename)} "
-                + f"--output_path {os.path.abspath(evaluation_result_path)}"
-            )
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -114,10 +100,7 @@ def main():
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--ckpt", default="all", help="ckpt name to be evaluated")
     parser.add_argument("--visualize", action="store_true")
-    parser.add_argument("--bop_eval", action="store_true", help="eval by Bop metric")
-    parser.add_argument("--bop_visualize", action="store_true")
     parser.add_argument("--detection", required=False)
-    parser.add_argument("--dir_suffix", default="")
 
     args = parser.parse_args()
     # parse --eval_folder, generate args.config_file
@@ -143,34 +126,24 @@ def main():
             args.ckpt = [
                 args.ckpt,
             ]
-
     # parse --debug
     cfg.DEBUG = args.debug
-    # parse --bop
-    if args.bop_visualize is True:
-        assert args.bop_eval is True, "bop_visualize is based on bop_eval"
-
     # parse device
     device = torch.device(args.device)
-    if args.detection is not None:
-        # parse --detection
-        if "gdrnppdet" in args.detection:
-            cfg.DATASETS.TEST_DETECTION_TYPE = "type2"
-            cfg.DATASETS.TEST_DETECTION_PATH = args.detection
-        elif "zebrapose" in args.detection:
-            cfg.DATASETS.TEST_DETECTION_TYPE = "type1"
-            cfg.DATASETS.TEST_DETECTION_PATH = args.detection
+
+    # parse --detection
+    if "gdrnppdet" in args.detection:
+        cfg.DATASETS.TEST_DETECTION_TYPE = "type2"
+        cfg.DATASETS.TEST_DETECTION_PATH = args.detection
+    elif "zebrapose" in args.detection:
+        cfg.DATASETS.TEST_DETECTION_TYPE = "type1"
+        cfg.DATASETS.TEST_DETECTION_PATH = args.detection
 
     # get info used in calculate metric
     obj_ids = cfg.DATASETS.OBJ_IDS
     dataset_name = cfg.DATASETS.NAME
     meta_info = MetaInfo(dataset_name)
-    models_3d = {
-        obj_id: inout.load_ply(meta_info.model_tpath.format(obj_id=obj_id))
-        for obj_id in obj_ids
-    }
     models_info = inout.load_json(meta_info.models_info_path, keys_to_int=True)
-    diameters = {obj_id: models_info[obj_id]["diameter"] for obj_id in obj_ids}
     sym_obj_id = cfg.DATASETS.SYM_OBJS_ID
     if sym_obj_id == "bop":
         sym_obj_id = [
@@ -179,6 +152,17 @@ def main():
             if "symmetries_discrete" in v or "symmetries_continuous" in v
         ]
     objs = load_objs(meta_info, obj_ids)
+    if cfg.DATASETS.CODE_TYPE == 'SymCode':
+        from utils.class_id_encoder_decoder import load_decoders
+        decoders = load_decoders(
+            meta_info.models_GT_color_folder,
+            bit=cfg.MODEL.GEOMETRY_NET.get("CODE_BIT", 16),
+            obj_ids=obj_ids,
+        )
+    elif cfg.DATASETS.CODE_TYPE == 'ZebraCode':
+        from utils.class_id_encoder_decoder import load_decoders_zebracode
+        decoders = load_decoders_zebracode(meta_info.zebrapose_code_folder, obj_ids=obj_ids)
+
     renderer = ObjCoordRenderer(objs, [k for k in objs.keys()], cfg.DATASETS.RES_CROP)
     # CODE_BIT is a new parameter that needs a default value of 16, ensuring compatibility with older configuration
     cfg.MODEL.GEOMETRY_NET.CODE_BIT = cfg.MODEL.GEOMETRY_NET.get("CODE_BIT", 16)
@@ -187,7 +171,7 @@ def main():
 
     for ck in args.ckpt:
         cfg.OUTPUT_DIR = os.path.join(
-            cfg.OUTPUT_ROOT, os.path.splitext(ck)[0] + args.dir_suffix
+            cfg.OUTPUT_ROOT, os.path.splitext(ck)[0] + "ablation_pnp"
         )
         if not os.path.exists(cfg.OUTPUT_DIR):
             os.mkdir(cfg.OUTPUT_DIR)
@@ -197,14 +181,13 @@ def main():
             os.mkdir(cfg.VIS_DIR)
         cfg.RESUME = os.path.join(cfg.OUTPUT_ROOT, ck)
 
-        # build model
         assert cfg.MODEL.NAME == "SymNet"
         model = build_model(cfg)
         model.load_state_dict(torch.load(cfg.RESUME)["state_dict"])
         model.eval().to(device).freeze()
 
         # load data
-        data_test = build_BOP_test_dataset(cfg, cfg.DATASETS.TEST, gt=args.visualize ,debug=cfg.DEBUG)
+        data_test = build_BOP_test_dataset(cfg, cfg.DATASETS.TEST, debug=cfg.DEBUG)
         loader_test = torch.utils.data.DataLoader(
             data_test,
             batch_size=1,
@@ -213,7 +196,7 @@ def main():
             collate_fn=batch_data_test,
         )
         predictions = dict()
-        time_forward = []
+        time_forward, time_optimize = [], []
         for idx, batch in enumerate(tqdm(loader_test)):
             with add_timing_to_list(time_forward):
                 out_dict = model.infer(
@@ -238,6 +221,17 @@ def main():
                 est_R = out_rots[i]
                 est_t = out_transes[i]
 
+                K_d_2 = np.copy(batch["K_crop"][0].cpu().numpy())
+                K_d_2[:2, :] = K_d_2[:2, :] / 2
+                with add_timing_to_list(time_optimize):
+                    est_R, est_t, success = pose_pnp(
+                        K_d_2,
+                        out_dict["visib_mask_prob"][0, 0],
+                        out_dict["binary_code_prob"][0],
+                        decoders[obj_id],
+                    )
+                if success is False:
+                    continue
                 if obj_id not in predictions:
                     predictions[obj_id] = list()
                 result = {
@@ -257,13 +251,7 @@ def main():
         print("time_forward", np.mean(time_forward))
         for d in predictions[obj_id]:
             d["time"] = d["time"] + np.mean(time_forward)
-        write_cvs(
-            cvs_path,
-            cfg.MODEL.NAME + "_" + cfg.DATASETS.NAME,
-            predictions,
-            args.bop_eval,
-            args.bop_visualize,
-        )
+        write_cvs(cvs_path, cfg.MODEL.NAME + "_" + cfg.DATASETS.NAME, predictions)
 
 
 if __name__ == "__main__":

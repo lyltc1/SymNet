@@ -42,14 +42,49 @@ def class_code_to_class_id_and_class_id_max_images(class_code_img, bit=15, class
     return class_id_img, class_id_max_img
 
 
-def load_decoders(decoder_dir: Path):
+def load_decoders(decoder_dir, bit=16, obj_ids=None):
     decoders = {}
-    obj_ids = sorted([int(p.name[-11:-5]) for p in decoder_dir.glob('Class_CorresPoint*.json')])
+    if obj_ids is None:
+        obj_ids = sorted(
+            [int(p.name[-11:-5]) for p in decoder_dir.glob("Class_CorresPoint*.json")]
+        )
     for obj_id in obj_ids:
-        decoder_path = str(decoder_dir / f'Class_CorresPoint{obj_id:06d}.json')
-        if os.path.exists(decoder_path):
-            with open(decoder_path, 'r') as f:
-                result = json.loads(f.read())
-                result['corresponding'] = dict((int(k), [tuple(vi) for vi in v]) for k, v in result['corresponding'].items())
-                decoders[obj_id] = result
+        decoder_path = os.path.join(decoder_dir, f"Class_CorresPoint{obj_id:06d}.json")
+        assert os.path.exists(decoder_path)
+        with open(decoder_path, "r") as f:
+            data = json.loads(f.read())
+            corresponding = data["corresponding"]
+            gathered_corresponding = dict()
+            left = 0
+            while left < 2**16:
+                right = left + 2 ** (16 - bit)
+                gathered_corresponding[left] = list()
+                for i in range(left, right):
+                    if corresponding[str(i)]:
+                        gathered_corresponding[left].extend(corresponding[str(i)])
+                left = right
+            decoders[obj_id] = gathered_corresponding
+
+    return decoders
+
+
+def load_decoders_zebracode(decoder_dir: str, obj_ids):
+    decoders = {}
+    for obj_id in obj_ids:
+        decoder_path = os.path.join(decoder_dir, 'models_GT_color', f'Class_CorresPoint{obj_id:06d}.txt')
+        dict_class_id_3D_points = {}
+
+        with open(decoder_path, "r") as f:
+            first_line = f.readline()
+            total_numer_class, divide_number_each_itration, number_of_itration = first_line.split(" ") 
+
+            for line in f:
+                line = line[:-1]
+                code, x, y, z= line.split(" ")
+                if "nan" in x:
+                    dict_class_id_3D_points[int(code)] = []
+                else:
+                    dict_class_id_3D_points[int(code)] = [(float(x), float(y), float(z)),]
+        decoders[obj_id] = dict_class_id_3D_points
+    
     return decoders

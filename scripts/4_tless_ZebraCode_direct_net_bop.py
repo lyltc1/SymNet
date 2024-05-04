@@ -12,8 +12,8 @@ folder_path = "SymNet_pbr_ZebraCode"
 dir_suffix = "zebracode"
 output_file_name = "SymNetZebraCodepbr_tless-test.csv"
 output_fn = os.path.join(folder_path, output_file_name)
-RUN_EVALUATE = True
-GENERATE_CSV = True
+RUN_EVALUATE = False
+GENERATE_CSV = False
 EVAL_BOP = True
 
 if RUN_EVALUATE:
