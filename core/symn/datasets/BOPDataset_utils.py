@@ -192,7 +192,7 @@ def build_BOP_train_dataset(cfg, dataset_type, debug=False):
                 auxs=auxs_pbr,
             )
             dataset.append(pbr_dataset)
-        elif name == "test" or name == "test_primesense":
+        elif name in ["test", "test_primesense"]:
             # use only for debug
             auxs = get_aux(
                 cfg, gt=True, aug_occ=False, aug_bg=False, aug_rgb=False, debug=debug

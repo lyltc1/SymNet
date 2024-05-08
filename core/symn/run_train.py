@@ -81,9 +81,9 @@ def main():
     model = build_model(cfg)
 
     # datasets
-    data_train = build_BOP_train_dataset(cfg, cfg.DATASETS.TRAIN, args.debug)
     cfg.DATASETS.TEST_DETECTION_PATH = None
-    data_valid = build_BOP_test_dataset(cfg, cfg.DATASETS.TEST, args.debug)
+    data_train = build_BOP_train_dataset(cfg, cfg.DATASETS.TRAIN, args.debug)
+    data_valid = build_BOP_test_dataset(cfg, cfg.DATASETS.TEST, debug=args.debug, gt=True)
     if args.small_dataset:
         data_train, _ = torch.utils.data.random_split(
             data_train, (128, len(data_train) - 128),

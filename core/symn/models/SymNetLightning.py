@@ -280,6 +280,8 @@ class SymNet(pl.LightningModule):
             if pnp_net_cfg.FREEZE:
                 loss = loss.detach()
             loss_dict["loss_PM_R"] = loss
+        else:
+            loss_dict["loss_PM_R"] = 0.0
         # ---- SITE_xy loss ----
         if pnp_net_cfg.SITE_XY_LW > 0:
             if pnp_net_cfg.SITE_XY_LOSS_TYPE == "L1":
@@ -292,6 +294,8 @@ class SymNet(pl.LightningModule):
             if pnp_net_cfg.FREEZE:
                 loss = loss.detach()
             loss_dict["loss_site_xy"] = loss
+        else:
+            loss_dict["loss_site_xy"] = 0.0
         # ---- SITE_z loss ----
         if pnp_net_cfg.SITE_Z_LW > 0:
             if pnp_net_cfg.SITE_Z_LOSS_TYPE == "L1":
@@ -304,6 +308,8 @@ class SymNet(pl.LightningModule):
             if pnp_net_cfg.FREEZE:
                 loss = loss.detach()
             loss_dict["loss_site_z"] = loss
+        else:
+            loss_dict["loss_site_z"] = 0.0
         # ---- R allo sym loss ----
         if pnp_net_cfg.R_ALLO_SYM_LW > 0:
             if pnp_net_cfg.R_ALLO_SYM_LOSS_TYPE == "L1":
@@ -317,6 +323,7 @@ class SymNet(pl.LightningModule):
             if pnp_net_cfg.FREEZE:
                 loss = loss.detach()
             loss_dict["loss_allo_sym"] = loss
+
         return loss_dict
 
     def configure_optimizers(self):
