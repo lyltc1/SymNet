@@ -32,11 +32,15 @@ recommend using soft links (ln -sf)
 
 * Download [VOC 2012 Train/Validation Data(1.9GB)](https://pjreddie.com/projects/pascal-voc-dataset-mirror/) for background images.
 
-* Please also download the `binary_code` and `models_GT_color` and `detections`from here.
+* Download the `models_GT_color` from [OneDrive](https://1drv.ms/f/c/7b1c1126f255a9dd/EkMW0IAUao9IvmaIIogfVQMBv83QT9Vm1yO_OSMqQWItlw?e=IYhmJd).
 
-* Download the `detections` from here.
+* Download the `binary code` from [OneDrive](https://1drv.ms/f/c/7b1c1126f255a9dd/Ei4ygJmb6oFOjWDKO-0mYW0BdmbUj4TiNT2NWRZG5ak3Fg).
+
+* Download the `detections` from [OneDrive](https://1drv.ms/f/c/7b1c1126f255a9dd/Eude-fZPIttGvMcEv9GGU8sB14yStsFHKt3v4Hjp8SO5Ag).
 
 * Download the [pretrained resnet34 backbone](https://cloud.dfki.de/owncloud/index.php/s/zT7z7c3e666mJTW), save them under `./pretrained_backbone`.
+
+* Download the trained model from [OneDrive](https://1drv.ms/f/c/7b1c1126f255a9dd/Ek58V6LewhpIlkQNacN4Sa8B8K0u721WuCg4D65I5wueOA?e=hk9m6W).
 
 The structure of this project should look like below:
 ```
