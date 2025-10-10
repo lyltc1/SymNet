@@ -1,16 +1,15 @@
-# SYM-Net
+# SymNet
 This repo provides the PyTorch implementation of the work:
 
-**SYM-Net: Symmetry aware Net.
+**Resolving Symmetry Ambiguity in Correspondence-based Methods for Instance-level Object Pose Estimation**
 
 ## Overview
-
 
 ## Requirements
 * Ubuntu 16.04/18.04/20.04/22.04, CUDA, python >= 3.6, PyTorch >= 1.6, torchvision
 
 ## Installation
-One way is to set up the environment with docker.See [this](./docker/README.md)
+One way is to set up the environment with docker.
 Another way is to install the following parts.
 
 * Install `detectron2` from [detectron2](https://github.com/facebookresearch/detectron2).
@@ -144,10 +143,11 @@ ln -s /home/dataset/pretrained_backbone/ /home/Symnet/
 mkdir pretrained_backbone
 ln -s /home/dataset/pretrained_backbone/resnet/resnet34-333f7ec4.pth /home/Symnet/pretrained_backbone/
 ```
-
 ### 4. modify ```MetaInfo.py```
 all path of datasets is defined in core/symn/MetaInfo.py, check it or change it.
 ```
 # untrack the file if modified locally
 git update-index --assume-unchanged "core/symn/MetaInfo.py"
 ```
+## SymCode
+To generate SymCode by yourself, following the instruction from https://github.com/[lyltc1/code_generator](https://github.com/lyltc1/code_generator)
